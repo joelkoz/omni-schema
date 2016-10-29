@@ -141,7 +141,7 @@ You can use these plugins to get to work right away, or use them as a guide to m
 db-camo.js
 
 A plugin to generate a Camo document, enabling ODM for MongoDB or NeDB
-Uses: [Camo](https://github.com/scottwrobinson/camo)
+Uses: *[Camo](https://github.com/scottwrobinson/camo)*
 ```
 
 
@@ -149,7 +149,7 @@ Uses: [Camo](https://github.com/scottwrobinson/camo)
 db-mongoosejs.js
 
 A plugin to generate a Mongoose schema, enabling ODM for MongoDB
-Uses: [Mongoose](http://mongoosejs.com)
+Uses: *[Mongoose](http://mongoosejs.com)*
 ```
 
 
@@ -157,7 +157,7 @@ Uses: [Mongoose](http://mongoosejs.com)
 mock-faker.js
 
 A plugin to generate mock data for a record that matches the schema.
-Uses: [Faker](https://github.com/stympy/faker)
+Uses: *[Faker](https://github.com/stympy/faker)*
 ```
 
 ```
@@ -171,10 +171,10 @@ ui-react-formsy-materialui.js
 
 A plugin to generate React components using Material UI to create a UI for editing records that match the schema.
 
-Uses: [React](https://facebook.github.io/react)
-      [Material UI](http://www.material-ui.com)
-      [Formsy](https://github.com/christianalfoni/formsy-react)
-      [Formsy-Material-UI](https://github.com/mbrookes/formsy-material-ui)
+Uses: *[React](https://facebook.github.io/react)*
+      *[Material UI](http://www.material-ui.com)*
+      *[Formsy](https://github.com/christianalfoni/formsy-react)*
+      *[Formsy-Material-UI](https://github.com/mbrookes/formsy-material-ui)*
 ```
 
 Known Issues
