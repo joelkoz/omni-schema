@@ -85,12 +85,12 @@ connect(uri).then(() => {
     let dbRecord = Contact.create(mockRecord);
     dbRecord.save().then(() => {
         console.log('\n\nDatabase record values:');
-        console.log(JSON.stringify(mockRecord));
+        console.log(JSON.stringify(dbRecord));
 
 
         // Now, show some HTML that will edit the record...
         console.log('\n\nHTML to edit the above data...')
-        console.log(ContactSchema.getHtmlForm('Save', { method: 'POST', action: '/contact/save'}, mockRecord));
+        console.log(ContactSchema.getHtmlForm('Save', { method: 'POST', action: '/contact/save'}, dbRecord));
 
 
         // Now, see if it is valid using the Joi validator plugin...
