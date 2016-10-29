@@ -1,10 +1,14 @@
 {
   "name": "omni-schema",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Universal, Extendable Schemas for Javascript",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joelkoz/omni-schema.git"
   },
   "keywords": [
     "javascript",
@@ -13,24 +17,29 @@
     "material-ui",
     "schema",
     "mongodb",
+    "mongoosejs",
+    "camo",
+    "joi",
     "html",
     "ui"
   ],
   "author": "Joel Kozikowski",
   "license": "MIT",
-
   "dependencies": {
     "lodash": "^4.16.4",
     "moment": "^2.15.2"
   },
-
   "devDependencies": {
-    "react-scripts": "0.7.0",
+    "camo": "^0.12.2",
+    "faker": "^3.1.0",
     "formsy-material-ui": "^0.5.2",
     "formsy-react": "^0.18.1",
+    "joi": "^9.2.0",
     "material-ui": "^0.16.1",
+    "mongoose": "^4.6.5",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
+    "react-scripts": "0.7.0",
     "react-tap-event-plugin": "^1.0.0"
-  }  
+  }
 }
