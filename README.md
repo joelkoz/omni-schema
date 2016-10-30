@@ -36,11 +36,11 @@ Usage
 ------------
 
 ```javascript
-const OmniSchema = require('../index');
-const OmniHtml5 = require('../plugins/ui-html5');
-const OmniJoi = require('../plugins/validation-joi');
-const OmniFaker = require('../plugins/mock-faker');
-const OmniCamo = require('../plugins/db-camo');
+const OmniSchema = require('omni-schema');
+const OmniHtml5 = require('omni-schema/lib/plugins/ui-html5');
+const OmniJoi = require('omni-schema/lib/plugins/validation-joi');
+const OmniFaker = require('omni-schema/lib/plugins/mock-faker');
+const OmniCamo = require('omni-schema/lib/plugins/db-camo');
 
 const connect = require('camo').connect;
 
