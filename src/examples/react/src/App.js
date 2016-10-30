@@ -55,6 +55,8 @@ class App extends Component {
              cancelButtonName='Cancel'
              onCancel={this.onCancel}
              defaultValues={mockData}
+             className="myFormClass"
+             style={{ width: '50%', minWidth: '300px', padding: '15px' }}
              />
       </div>
     );
