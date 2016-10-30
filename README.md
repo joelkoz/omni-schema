@@ -87,20 +87,29 @@ connect(uri).then(() => {
         console.log('\n\nDatabase record values:');
         console.log(JSON.stringify(dbRecord));
 
+        // Create a sanitized version of the record that contains only fields
+        // that are to be used for UI editing purposes...
+        let uiRecord = ContactSchema.sanitize(dbRecord, true);
+        console.log('\n\nSanitized record value we can let the user see:');
+        console.log(JSON.stringify(uiRecord));
 
         // Now, show some HTML that will edit the record...
         console.log('\n\nHTML to edit the above data...')
-        console.log(ContactSchema.getHtmlForm('Save', { method: 'POST', action: '/contact/save'}, dbRecord));
+        console.log(ContactSchema.getHtmlForm('Save', { method: 'POST', action: '/contact/save'}, uiRecord));
 
 
         // Now, see if it is valid using the Joi validator plugin...
         console.log('\n\nNow validating record...');
 
+
         // Pass TRUE to getValidator() to indicate we want a validator
         // for UI purposes (i.e. to NOT include fields marked with "ui.exclude: true")
-        // We will also explicitly ignore '_id' and '_schema' (which are internal fields
-        // used by Camo documents).  Our mock db record includes ALL fields (including the 'ownerId')
-        // so this first validation will fail...
+        // Our first attempt will be to validate the record from the database, 
+        // so lets specify we want to explicitly ignore '_id' and '_schema' (which 
+        // are internal fields used by Camo documents).  Our mock DB record 
+        // still includes the "ownerId" field, so this first validation will 
+        // fail. It will complain about ownerId, but will NOT complain 
+        // about the presence of _id nor _schema.
         let uiValidator = ContactSchema.getValidator(true);
         if (uiValidator.isValid(dbRecord, ['_id', '_schema'])) {
           console.log('Record is valid.');
@@ -109,17 +118,15 @@ connect(uri).then(() => {
           console.log('As expected, the record is not valid -- ' + uiValidator.lastError);
         }
 
-        // Create a new validator that does NOT exclude non-UI
-        // elements so it will validate correctly. Also - let's use
-        // the alternative "try/catch" version of validation from
-        // the plugin...
-        let dbValidator = ContactSchema.getValidator(false);
+        // Now, lets try to validate the sanitized UI record instead.
+        // Also - let's use the alternative "try/catch" version of 
+        // validation from the plugin...
         try {
-          let validatedRecord = dbValidator.validate(dbRecord, ['_id', '_schema']);
-            console.log('Record is now valid.');
+            let validatedRecord = uiValidator.validate(uiRecord);
+            console.log('Record validated correctly');
         }
         catch (error) {
-          console.log('WARNING - mock record is STILL not valid -- ' + error.message);
+          console.log('WARNING - ui record not valid -- ' + error.message);
         }
 
     })
@@ -130,6 +137,7 @@ connect(uri).then(() => {
 .catch((error) => {
   console.log(error);
 });
+
 ```
 
 Pre existing OmniSchema Plugins

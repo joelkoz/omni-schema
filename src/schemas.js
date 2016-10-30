@@ -151,6 +151,49 @@ class OmniSchema {
 
 
 	/**
+	* Returns a copy of obj that contains only fields that are present in this
+	* schema.  If uiExclude is TRUE, the returned object will include only
+	* fields that are part of the UI definition (i.e. do NOT have the ui.exclude
+	* property set to TRUE)
+	*/
+	sanitize(obj, uiExclude) {
+		let keyList;
+
+		if (uiExclude) {
+			if (!this.__uiKeyList) {
+				// This is the first call to this method - 
+				// compute the entry...
+				let uiKeys = [];
+				for (let fieldName in this) {
+					let field = this[fieldName];
+					if ((field instanceof OmniSchema.OmniField) && !field.uiExclude) {
+						uiKeys.push(fieldName);
+					}
+				} // for
+				Object.defineProperty(this, '__uiKeyList', { configurable: true, 
+															 enumerable: false, 
+															 writeable: true, 
+															 value: uiKeys });
+			}
+			keyList = this.__uiKeyList;
+		}
+		else {
+			if (!this.__fullKeyList) {
+				// This is the first call to this method - 
+				// add the entry...
+				Object.defineProperty(this, '__fullKeyList', { configurable: true, 
+															   enumerable: false, 
+															   writeable: true, 
+															   value: Object.keys(this)});
+			}
+			keyList = this.__fullKeyList;
+		}
+
+		return _.pick(obj, keyList);
+	}
+
+
+	/**
 	 * DataTypeMatches is a helper function for mixin() that is used
 	 * to determine if a specific data type matches the "match specification".
 	 * A match specification can be:
