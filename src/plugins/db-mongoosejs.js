@@ -49,7 +49,7 @@ let plugin = function() {
 
 	// And now, define specialized controls for the specialzed data types that vary
 	// from our defaults. Inheritance will take care of the rest...
-	defineDbType('Email', String, { match: '^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$' });
+	defineDbType('Email', String, { match: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/ });
 
 	// Now, mix in functionality to OmniSchema...
 	OmniSchema.mixin({
