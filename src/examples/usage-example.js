@@ -26,6 +26,8 @@ const ContactSchema = OmniSchema.compile({
                           ownerId: { type: 'Integer', ui: { exclude: true }}, // Internal field - no user editing
                   	  });
 
+console.log(`The fields in our schema are ${JSON.stringify(ContactSchema.getFieldList())}`);
+console.log(`\nThe fields to be displayed in the UI are ${JSON.stringify(ContactSchema.getFieldList(true))}\n`);
 
 // First, connect to database
 // let uri = 'mongodb://localhost:27017/OmniSchemaExample'; // save to a MongoDB database
@@ -38,7 +40,7 @@ connect(uri).then(() => {
 
     // Next, generate some mock data with the Faker plugin...
     let mockRecord = ContactSchema.getMockData();
-    console.log('\n\nMock record values:');
+    console.log('\nMock record values:');
     console.log(JSON.stringify(mockRecord));
 
 

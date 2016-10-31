@@ -151,45 +151,60 @@ class OmniSchema {
 
 
 	/**
+	 * Calls the callBack function for each field definition in the schema, passing
+	 * the OmniField definition as the sole parameter.  If uiOnly is TRUE,
+	 * the callback will only be called for fields that are marked as part of the UI
+	 * (i.e. do NOT have the ui.exclude property set to true).
+	 */
+	forEachField(callBack, uiOnly) {
+		for (let fieldName in this) {
+			let field = this[fieldName];
+			if ((field instanceof OmniSchema.OmniField) && (!uiOnly || !field.uiExclude)) {
+				callBack(field);
+			}
+		} // for
+	}
+
+
+
+	/**
+	 * Returns an array of field names for the defined fields in this schema.
+	 * if uiOnly is TRUE, the list returned will be for only those fields
+	 * that are not excluded from the user interface with the 'ui.exclude'
+	 * property.
+	 */
+	getFieldList(uiOnly) {
+
+		let propName;
+		if (uiOnly) {
+			propName = '__uiKeyList';
+		}
+		else {
+			propName = '__fullKeyList';
+		}
+
+		// Return a memoirized list
+		if (!this[propName]) {
+			let uiKeys = [];
+			this.forEachField(function (field) { uiKeys.push(field.name); }, uiOnly);
+			Object.defineProperty(this, propName, { configurable: true, 
+												    enumerable: false, 
+													writeable: true, 
+													value: uiKeys });
+		}
+
+		return this[propName];
+	}
+
+
+	/**
 	* Returns a copy of obj that contains only fields that are present in this
-	* schema.  If uiExclude is TRUE, the returned object will include only
+	* schema.  If uiOnly is TRUE, the returned object will include only
 	* fields that are part of the UI definition (i.e. do NOT have the ui.exclude
 	* property set to TRUE)
 	*/
-	sanitize(obj, uiExclude) {
-		let keyList;
-
-		if (uiExclude) {
-			if (!this.__uiKeyList) {
-				// This is the first call to this method - 
-				// compute the entry...
-				let uiKeys = [];
-				for (let fieldName in this) {
-					let field = this[fieldName];
-					if ((field instanceof OmniSchema.OmniField) && !field.uiExclude) {
-						uiKeys.push(fieldName);
-					}
-				} // for
-				Object.defineProperty(this, '__uiKeyList', { configurable: true, 
-															 enumerable: false, 
-															 writeable: true, 
-															 value: uiKeys });
-			}
-			keyList = this.__uiKeyList;
-		}
-		else {
-			if (!this.__fullKeyList) {
-				// This is the first call to this method - 
-				// add the entry...
-				Object.defineProperty(this, '__fullKeyList', { configurable: true, 
-															   enumerable: false, 
-															   writeable: true, 
-															   value: Object.keys(this)});
-			}
-			keyList = this.__fullKeyList;
-		}
-
-		return _.pick(obj, keyList);
+	sanitize(obj, uiOnly) {
+		return _.pick(obj, this.getFieldList(uiOnly));
 	}
 
 
