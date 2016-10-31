@@ -28,7 +28,7 @@
   "author": "Joel Kozikowski",
   "license": "MIT",
   "files": [
-    "lib",
+    "lib"
   ],  
   "dependencies": {
     "lodash": "^4.16.4",
