@@ -1,11 +1,11 @@
 {
   "name": "omni-schema",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Universal, Extendable Schemas for Javascript",
   "main": "index.js",
   "scripts": {
     "build": "babel ./src -d ./lib --ignore examples",
-    "prepublish": "npm run build",    
+    "prepublish": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,7 +29,7 @@
   "license": "MIT",
   "files": [
     "lib"
-  ],  
+  ],
   "dependencies": {
     "lodash": "^4.16.4",
     "moment": "^2.15.2"
