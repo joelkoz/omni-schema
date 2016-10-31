@@ -27,6 +27,7 @@ const ContactSchema = OmniSchema.compile({
                   	  });
 
 console.log(`The fields in our schema are ${JSON.stringify(ContactSchema.getFieldList())}`);
+
 console.log(`\nThe fields to be displayed in the UI are ${JSON.stringify(ContactSchema.getFieldList(true))}\n`);
 
 // First, connect to database
