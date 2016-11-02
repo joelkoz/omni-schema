@@ -152,7 +152,7 @@ The following data types are already defined in OmniSchema. You can use them dir
 property of your field definition, or use them as the "baseType" when defining a new data type with
 OmniSchema.defineDataType():
 
-```
+
 | Data type | Javascript type | Base data type | Notes |
 | --------- | :-------------: | -------------- | ------|
 | String |string | DataType | |
@@ -181,7 +181,8 @@ OmniSchema.defineDataType():
 | YesNo | boolean | Boolean | presents in UI as enumeration of "Yes" and "No"
 | Sex | string | String | presents in UI as enumeration of "Male" and "Female"
 | OnOff | boolean | Boolean | presents in UI as a toggle. Also is enumeration of "On and "Off" 
-```
+
+
 To define your own data types, use one of the following methods:
 
 ```
@@ -213,6 +214,7 @@ using one of the below will make your plugin more useful to pre existing schema 
 | validation.max | number | For numbers, the maximum allowed number. For strings, the maximum allowed length
 | validation.required | boolean | If true, the field is required to have a value to pass ui and db validation
 | default | a value or a function | If a function, it is called (with zero arguments) to compute a default value. Otherwise, the value is used as is.
+
 
 
 
