@@ -26,9 +26,11 @@ class OmniField {
 		return this._name;
 	}
 
+
 	get type() {
 		return this._type;
 	}
+
 
 	get isArray() {
 		if (typeof this._isArray === 'undefined') {
@@ -38,6 +40,7 @@ class OmniField {
 			return this._isArray;
 		}
 	}
+
 
 	get isRequired() {
 		let req1 = _.get(this, 'required');
@@ -51,6 +54,7 @@ class OmniField {
 		}
 	}
 
+
 	get label() {
 
 		if (!this._label) {
@@ -59,18 +63,35 @@ class OmniField {
 		return this._label;
 	}
 
+
 	get uiExclude() {
 		return Boolean(_.get(this, 'ui.exclude'));
 	}
+
 
 	get minVal() {
 		return _.get(this, 'validation.min');
 	}
 
+
 	get maxVal() {
 		return _.get(this, 'validation.max');
 	}
 
+
+	get defaultValue() {
+		if (typeof this.default !== 'undefined') {
+			if (typeof this.default === 'function') {
+				return this.default();
+			}
+			else {
+				return this.default;
+			}
+		}
+		else {
+			return this.type.defaultValue;
+		}
+	}
 }
 
 
@@ -93,7 +114,7 @@ class OmniSchema {
 	 *		phones: [{ type: 'Phone' }],
 	 *		email: { type: 'Email', required: true },
 	 *		birthdate: { type: 'Date' },
-	 *		ownerId: { type: 'Integer', uiExclude: true }
+	 *		ownerId: { type: 'Integer', ui: { exclude: true } }
 	 *	}
 	 *</code>
 	 */
@@ -114,7 +135,7 @@ class OmniSchema {
 				isArray = false;
 			}
 
-			let omniType, required, label, uiExclude, otherProps;
+			let omniType, required, label, otherProps;
 
 			if (prop instanceof OmniTypes.DataType) {
 				omniType = prop;
@@ -205,6 +226,18 @@ class OmniSchema {
 	*/
 	sanitize(obj, uiOnly) {
 		return _.pick(obj, this.getFieldList(uiOnly));
+	}
+
+
+	/**
+	 * Creates a record that matches the schema, using the fields default values.
+	 * if uiOnly is TRUE, the returned record will include only fields that are part
+	 * of the UI definition.
+	 */
+	getDefaultRecord(uiOnly) {
+		let rec = {};
+		this.forEachField(function (field) { rec[field.name] = field.defaultValue; }, uiOnly);
+		return rec;
 	}
 
 

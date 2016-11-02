@@ -30,6 +30,14 @@ class DataType {
 		return this._name;
 	}
 
+	get defaultValue() {
+		if (typeof this._defaultValue == 'function') {
+			return this._defaultValue();
+		}
+		else {
+			return this._defaultValue;
+		}
+	}
 }
 
 
@@ -123,9 +131,9 @@ function defineEnumerationType(name, optionSpec, props, baseType) {
 }
 
 // The Javascript primatives...
-defineJSType('String', 'string', null, function toString(str) { return str }, function fromString(str) { return str });
+defineJSType('String', 'string', { _defaultValue: '' }, function toString(str) { return str }, function fromString(str) { return str });
 
-defineJSType('Number', 'number', null,
+defineJSType('Number', 'number', { _defaultValue: 0 },
 	function toString(num) {
 
 		if (num) {
@@ -146,7 +154,7 @@ defineJSType('Number', 'number', null,
 	}
 );
 
-defineJSType('Boolean', 'boolean', null,
+defineJSType('Boolean', 'boolean', { _defaultValue: false },
 
 	function toString(b) {
 		return (b ? 'true' : 'false');
@@ -178,9 +186,9 @@ defineJSType('Boolean', 'boolean', null,
 	}
 );
 
-defineJSType('Object', 'object', { jsClassName: 'Object'});
+defineJSType('Object', 'object', { jsClassName: 'Object', _defaultValue: null });
 
-defineObjectType('DateTime', 'Date', null, OmniTypes.Object,
+defineObjectType('DateTime', 'Date', { _defaultValue: () => { return moment(new Date()) } } , OmniTypes.Object,
 
 	function toString(d) {
 		if (typeof d !== 'undefined') {

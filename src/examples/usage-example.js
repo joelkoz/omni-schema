@@ -21,7 +21,7 @@ const ContactSchema = OmniSchema.compile({
                       		email: { type: 'Email' },
                       		birthdate: { type: 'Date' },
                       		favorite: { type: 'YesNo', label: 'Add this person to your favorites?' },
-                      		balance: { type: 'Currency'},
+                      		balance: { type: 'Currency', default: 123.45 },
                           age: { type: 'Integer', validation: { min: 0 }},
                           ownerId: { type: 'Integer', ui: { exclude: true }}, // Internal field - no user editing
                   	  });
@@ -29,6 +29,9 @@ const ContactSchema = OmniSchema.compile({
 console.log(`The fields in our schema are ${JSON.stringify(ContactSchema.getFieldList())}`);
 
 console.log(`\nThe fields to be displayed in the UI are ${JSON.stringify(ContactSchema.getFieldList(true))}\n`);
+
+console.log(`\nA new blank default record for editing looks like this:\n${JSON.stringify(ContactSchema.getDefaultRecord(true))}\n`);
+
 
 // First, connect to database
 // let uri = 'mongodb://localhost:27017/OmniSchemaExample'; // save to a MongoDB database
