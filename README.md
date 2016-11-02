@@ -154,7 +154,7 @@ OmniSchema.defineDataType():
 
 
 | Data type | Javascript type | Base data type | Notes |
-| --------- | :-------------: | -------------- | ------|
+| --------- | :-------------: | :------------: | ------|
 | String |string | DataType | |
 | Number | number | DataType | |
 | Boolean | boolean | DataType | |
