@@ -12,7 +12,7 @@ As you look around the Javascript universe, you'll see thousands of useful libra
 
 Philosophies
 ------------
-1. Describe data elements at a very high level using fine grained data types like "first name" and "email address."
+1. Describe data elements at a very high level using fine grained data types like `FirstName` and `Email`.
 
 2. Use generic/conceptual attributes on your data or field definitions that may apply to different libraries vs. library specific attributes. For example, many libraries, be it for ui, data storage, or validation, have a concept of a field being "required". You should only have to describe this once, regardless of whether or not a library thinks the attribute is called "required", "isRequired", "req", or something else. Keeping things generic allows the same schema to serve different purposes, as well as allows different libraries for the same purpose (such as validation) to be swapped out for each other.
 
@@ -148,8 +148,8 @@ connect(uri).then(() => {
 Data types
 -------------------------------
 
-The following data types are already defined in OmniSchema. You can use them directly for the "type"
-property of your field definition, or use them as the "baseType" when defining a new data type with
+The following data types are already defined in OmniSchema. You can use them directly for the `type`
+property of your field definition, or use them as the `baseType` parameter when defining a new data type with
 OmniSchema.defineDataType():
 
 
@@ -185,7 +185,7 @@ OmniSchema.defineDataType():
 
 To define your own data types, use one of the following methods:
 
-```
+```javascript
 OmniSchema.defineDataType(name, props, baseType, toString, fromString)
 OmniSchema.defineStringType(name, props, toString, fromString)
 OmniSchema.defineNumericType(name, props, toString, fromString)
@@ -193,7 +193,9 @@ OmniSchema.defineBooleanType(name, props, toString, fromString)
 OmniSchema.defineObjectType(name, jsClassName, props, baseType, toString, fromString)
 OmniSchema.defineEnumerationType(name, optionSpec, props, baseType)
 ```
-See the source code in "types.js" for examples on how to use.
+
+All of the above allow you to specify a 'name' of a new data type, or a pre-existing data type. If a pre-existing data type is used, your specification is merged into the pre-existing data type. For this reason, it is common to define a "namespace" property when creating properties for a specific plugin (like a UI or DB plugin).  See the source code in `types.js`, as well as in
+`plugins/*.js` for examples on how to use.
 
 
 Schema field properties
@@ -225,33 +227,33 @@ You can use these plugins to get to work right away, or use them as a guide to m
 
 
 ----
-db-camo.js
+`db-camo.js`
 
 A plugin to generate a Camo document, enabling ODM for MongoDB or NeDB
 
 Uses: *[Camo](https://github.com/scottwrobinson/camo)*
 
 ----
-db-mongoosejs.js
+`db-mongoosejs.js`
 
 A plugin to generate a Mongoose schema, enabling ODM for MongoDB
 
 Uses: *[Mongoose](http://mongoosejs.com)*
 
 ----
-mock-faker.js
+`mock-faker.js`
 
 A plugin to generate mock data for a record that matches the schema.
 
 Uses: *[Faker](https://github.com/stympy/faker)*
 
 ----
-ui-html5.js
+`ui-html5.js`
 
 A plugin to generate a UI in pure HTML for editing records that match the schema.
 
 ----
-ui-react-formsy-materialui.js
+`ui-react-formsy-materialui.js`
 
 A plugin to generate React components using Material UI to create a UI for editing records that match the schema.
 
