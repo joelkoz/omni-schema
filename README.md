@@ -59,11 +59,16 @@ const ContactSchema = OmniSchema.compile({
                           email: { type: 'Email' },
                           birthdate: { type: 'Date' },
                           favorite: { type: 'YesNo', label: 'Add this person to your favorites?' },
-                          balance: { type: 'Currency'},
+                          balance: { type: 'Currency', default: 123.45},
                           age: { type: 'Integer', validation: { min: 0 }},
                           ownerId: { type: 'Integer', ui: { exclude: true }}, // Internal field - no user editing
                       });
 
+console.log(`The fields in our schema are ${JSON.stringify(ContactSchema.getFieldList())}`);
+
+console.log(`\nThe fields to be displayed in the UI are ${JSON.stringify(ContactSchema.getFieldList(true))}\n`);
+
+console.log(`\nA new blank default record for editing looks like this:\n${JSON.stringify(ContactSchema.getDefaultRecord(true))}\n`);
 
 // First, connect to database
 // let uri = 'mongodb://localhost:27017/OmniSchemaExample'; // save to a MongoDB database
@@ -139,6 +144,77 @@ connect(uri).then(() => {
 });
 
 ```
+
+Data types
+-------------------------------
+
+The following data types are already defined in OmniSchema. You can use them directly for the "type"
+property of your field definition, or use them as the "baseType" when defining a new data type with
+OmniSchema.defineDataType():
+
+```
+| Data type | Javascript type | Base data type | Notes |
+| --------- | :-------------: | -------------- | ------|
+| String |string | DataType | |
+| Number | number | DataType | |
+| Boolean | boolean | DataType | |
+| Object | object | DataType | dont use directly |
+| DateTime | Date | Object | |
+| Text | string | String | presents in UI as multi-line text |
+| FullName | string | String | use to generate realistic mock data |
+| FirstName | string | String |  use to generate realistic mock data |
+| LastName | string | String |  use to generate realistic mock data |
+| Password | string | String | present in UI as password field |
+| Phone | string | String | use to generate realistic mock data |
+| Email | string | String | requires proper format for ui and db validation |
+| Url | string | String |  requires proper format for ui and db validation |
+| StreetAddress | string | String |   use to generate realistic mock data |
+| City | string | String |   use to generate realistic mock data |
+| State | string | String |   use to generate realistic mock data |
+| PostalCode | string | String |   use to generate realistic mock data |
+| CreditCardNumber | string | String | requires proper format for ui and db validation |
+| Integer | number | Number | requires proper format for ui and db validation |
+| Decimal | number | Number | requires proper format for ui and db validation |
+| Currency | number | Number | requires proper format for ui and db validation |
+| Date | Date | DateTime | The 'date' part only of a DateTime
+| Time | Date | DateTime | The 'time' part only of a DateTime
+| YesNo | boolean | Boolean | presents in UI as enumeration of "Yes" and "No"
+| Sex | string | String | presents in UI as enumeration of "Male" and "Female"
+| OnOff | boolean | Boolean | presents in UI as a toggle. Also is enumeration of "On and "Off" 
+```
+To define your own data types, use one of the following methods:
+
+```
+OmniSchema.defineDataType(name, props, baseType, toString, fromString)
+OmniSchema.defineStringType(name, props, toString, fromString)
+OmniSchema.defineNumericType(name, props, toString, fromString)
+OmniSchema.defineBooleanType(name, props, toString, fromString)
+OmniSchema.defineObjectType(name, jsClassName, props, baseType, toString, fromString)
+OmniSchema.defineEnumerationType(name, optionSpec, props, baseType)
+```
+See the source code in "types.js" for examples on how to use.
+
+
+Schema field properties
+-------------------------
+
+The following properties are defined as "universal" properties that can be used by one or more
+plugins.  You are free to create your own of course if writing your own plugins, but if possible,
+using one of the below will make your plugin more useful to pre existing schema definitions:
+
+| Property | Possible values | Notes |
+| -------- | --------------- | ----- |
+| type | A string that matches any data type defined in OmniSchema.Types, or any OmniSchema.Type value | The only required field
+| label | any string | If not specified, a label will be formulated from the field name
+| required | boolean | A shortcut property for `validation.required`
+| ui.exclude | boolean | If true, this field will be excluded from any generated user interfaces and UI validations
+| ui.presentation | 'select', radio', 'toggle', 'checkbox' | For enumerations, a way to specify the UI presentation if you do not like the default value.  'toggle' and 'checkbox' are only valid for enumerations that are also boolean values
+| validation.min | number | For numbers, the minimum allowed number.  For strings, the minimum allowed length
+| validation.max | number | For numbers, the maximum allowed number. For strings, the maximum allowed length
+| validation.required | boolean | If true, the field is required to have a value to pass ui and db validation
+| default | a value or a function | If a function, it is called (with zero arguments) to compute a default value. Otherwise, the value is used as is.
+
+
 
 Pre existing OmniSchema Plugins
 -------------------------------
