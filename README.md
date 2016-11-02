@@ -7,7 +7,7 @@ OmniSchema is a universal, extendible schema framework that allows you to practi
 
 Motivation
 -----------
-As you look around the Javascript universe, you'll see thousands of useful libraries for storing, checking, and manipulating data. It seems that all of them have their own way of describing what the data is. What this means is that you end up describing the same data definition (for example, an address book entry) over and over to different libraries using their own dialects. OmniSchema attempts to solve this problem by allowing you to define your schemas at a very high level. For example, OmniSchema's data types are things like "FirstName", "email", and "Phone". While these three data elements may be stored in a database in exactly the same format (as a string), your UI may need to present and format them in different ways, and your validators have yet another way of determining if they are valid.  
+As you look around the Javascript universe, you'll see thousands of useful libraries for storing, checking, and manipulating data. It seems that all of them have their own way of describing what the data is. What this means is that you end up describing the same data definition (for example, an address book entry) over and over to different libraries using their own dialects. OmniSchema attempts to solve this problem by allowing you to define your schemas at a very high level. For example, OmniSchema's data types are things like `FirstName`, `Email`, and `Phone`. While these three data elements may be stored in a database in exactly the same format (as a string), your UI may need to present and format them in different ways, and your validators have yet another way of determining if they are valid.  
 
 
 Philosophies
