@@ -80,7 +80,10 @@ class OmniField {
 
 
 	get defaultValue() {
-		if (typeof this.default !== 'undefined') {
+		if (this.isArray) {
+			return [];
+		}
+		else if (typeof this.default !== 'undefined') {
 			if (typeof this.default === 'function') {
 				return this.default();
 			}

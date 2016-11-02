@@ -1,4 +1,4 @@
-## 1.3.0
+## 1.3.1
 ###### _Nov 2, 2016_
 
 - Added support for 'default' property in schema definition
