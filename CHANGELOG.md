@@ -1,4 +1,4 @@
-## 1.3.2
+## 1.3.3
 ###### _Nov 4, 2016_
 
 - Ignore '_id' field in an OmniSchema when generating Mongoose schema
