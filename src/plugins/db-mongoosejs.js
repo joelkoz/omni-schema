@@ -60,10 +60,12 @@ let plugin = function() {
 				let omniSchema = this;
 				let mongooseSchemaDef = {};
 				for (let fieldName in omniSchema) {
-					let field = omniSchema[fieldName];
-					if (field instanceof OmniSchema.OmniField) {
-						let mongooseField = field.getMongooseField();
-					    mongooseSchemaDef[fieldName] = mongooseField;
+					if (fieldName !== '_id') {
+						let field = omniSchema[fieldName];
+						if (field instanceof OmniSchema.OmniField) {
+							let mongooseField = field.getMongooseField();
+						    mongooseSchemaDef[fieldName] = mongooseField;
+						}
 					}
 				}
 				return new mongoose.Schema(mongooseSchemaDef);
