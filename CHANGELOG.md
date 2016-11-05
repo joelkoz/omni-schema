@@ -1,7 +1,9 @@
-## 1.4.0
+## 1.4.1
 ###### _Nov 4, 2016_
 
 - Added "convert()" method to convert object fields to property data type if necessary
+- Fixed React plugin to handle DatePicker and TimePicker values when stored as moment()
+- Default DateTime should not be today's date - it is now "undefined" by default.
 
 ## 1.3.3
 ###### _Nov 4, 2016_
