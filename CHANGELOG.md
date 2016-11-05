@@ -1,3 +1,8 @@
+## 1.4.0
+###### _Nov 4, 2016_
+
+- Added "convert()" method to convert object fields to property data type if necessary
+
 ## 1.3.3
 ###### _Nov 4, 2016_
 
