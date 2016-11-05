@@ -233,6 +233,68 @@ class OmniSchema {
 
 
 	/**
+	 * Examines each field in obj and attempts to convert it to
+	 * its appropriate type if necessary and possible. The new
+	 * converted object is returned (obj is left untouched).
+	 * If there are fields in obj that are not part of the
+	 * schema, they are left untouched unless the sanitize
+	 * parameter is true, in which case the field will be left
+	 * out of the returned object. Type conversion is predicated
+	 * on the schema data type having a fromString() method available
+	 * to convert it to its appropriate value.
+	 */
+	convert(obj, sanitize) {
+
+		let model = {};
+
+		// eslint-disable-next-line
+		for (let fieldName in obj) {
+			let field = this[fieldName];
+			if (field instanceof OmniSchema.OmniField) {
+				let modelVal = obj[fieldName];
+				if (modelVal === null) {
+					model[fieldName] = null;
+				}
+				else if (!field.isArray) {
+					// Process a single value...
+					model[fieldName] = this.convertValue(modelVal, field);
+				}
+				else {
+					// Process an array of values...
+					if (Array.isArray(modelVal)) {
+						model[fieldName] = [];
+						modelVal.forEach(function (entry) {
+							model[fieldName].push(this.convertValue(entry, field));
+						}.bind(this));
+					}
+					else if (!sanitize) {
+						model[fieldName] = [this.convertValue(modelVal, field)]
+					}
+				}
+			}
+			else if (!sanitize) {
+				model[fieldName] = obj[fieldName];
+			}
+		} // for
+
+		return model;
+	}
+
+
+	convertValue(modelVal, field) {
+
+		if (modelVal !== null) {
+			if (typeof modelVal !== field.type.jsType &&
+				typeof field.type.fromString === 'function') {
+				return field.type.fromString(modelVal.toString());
+			}
+		}
+
+		return modelVal;
+	}
+
+
+	/**
 	 * Creates a record that matches the schema, using the fields default values.
 	 * if uiOnly is TRUE, the returned record will include only fields that are part
 	 * of the UI definition.

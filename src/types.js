@@ -136,7 +136,7 @@ defineJSType('String', 'string', { _defaultValue: '' }, function toString(str) {
 defineJSType('Number', 'number', { _defaultValue: 0 },
 	function toString(num) {
 
-		if (num) {
+		if (typeof num !== 'undefined') {
 			return num.toString();
 		}
 		else {
@@ -177,6 +177,10 @@ defineJSType('Boolean', 'boolean', { _defaultValue: false },
 				return str;
 			}
 
+			if (str.trim().length === 0) {
+				return undefined;
+			}
+			
 			let lcs = str.toLowerCase();
 			return (lcs === 'true' || lcs === 'yes' || lcs === 'y' || lcs === 't');
 		}
