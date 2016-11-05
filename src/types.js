@@ -192,7 +192,7 @@ defineJSType('Boolean', 'boolean', { _defaultValue: false },
 
 defineJSType('Object', 'object', { jsClassName: 'Object', _defaultValue: null });
 
-defineObjectType('DateTime', 'Date', { _defaultValue: () => { return moment(new Date()) } } , OmniTypes.Object,
+defineObjectType('DateTime', 'Date', { _defaultValue: undefined } , OmniTypes.Object,
 
 	function toString(d) {
 		if (typeof d !== 'undefined') {
