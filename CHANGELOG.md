@@ -1,3 +1,8 @@
+## 1.5.0
+###### _Nov 5, 2016_
+
+- Added support for optional remove button to the React form returned by the ui-react-formsy-materialui plugin
+
 ## 1.4.1
 ###### _Nov 4, 2016_
 
