@@ -270,6 +270,8 @@ let plugin = function() {
 								onSubmit: React.PropTypes.func,
 								cancelButtonName: React.PropTypes.string,
 								onCancel: React.PropTypes.func,
+								removeButtonName: React.PropTypes.string,
+								onRemove: React.PropTypes.func,
 								controlProps: React.PropTypes.object,
 								defaultValues: React.PropTypes.object
 							},
@@ -278,9 +280,16 @@ let plugin = function() {
 							    muiTheme: React.PropTypes.object.isRequired,
 							},
 
+
 							handleCancelButton() {
 								this.props.onCancel(this.refs.form.reset);
 							},
+
+
+							handleRemoveButton() {
+								this.props.onRemove(this.refs.form.reset);
+							},
+
 
 							onValidSubmit(model, resetForm, invalidateForm) {
 								// Convert fields to their appropriate data type...
@@ -328,6 +337,11 @@ let plugin = function() {
 										    									style: { marginRight: '25px' },
 										    									label: this.props.cancelButtonName, 
 										    									onClick: this.handleCancelButton }) : undefined,
+										this.props.removeButtonName ?
+										    React.createElement(RaisedButton,  {type: 'button', 
+										    									style: { marginRight: '25px' },
+										    									label: this.props.removeButtonName, 
+										    									onClick: this.handleRemoveButton }) : undefined,
 										this.props.submitButtonName ?
 										    React.createElement(RaisedButton, {type: 'submit', style: { textAlign: 'left'}, label: this.props.submitButtonName, disabled: !this.state.canSubmit}) : undefined
 									)
