@@ -371,6 +371,34 @@ let plugin = function() {
 			},
 
 
+			{	matches: { $or: [ { reactMuiSpec: { elementType: 'FormsyDate' } },
+								  { reactMuiSpec: { elementType: 'FormsyTime' } },
+				                ]
+				         },
+
+				func: function getReactMUIComponent(field, controlProps, muiTheme) {
+					let dataTypeSpec = this.reactMuiSpec;
+					let component = getFormsyControl(dataTypeSpec.elementType);
+
+
+					// Date and Time pickers need a Javascript Date object, not a Moment()...
+					let value = controlProps.value;
+					if (moment.isMoment(value)) {
+						controlProps.value = value.clone().toDate();
+					}
+					let mergedProps = Object.assign(
+											{ name: field.name }, 
+											_.omit(dataTypeSpec, ['elementType','labelProperty']),
+											controlProps,
+											{ [dataTypeSpec.labelProperty] : field.label}
+										);
+					addRequiredValidator(field, mergedProps);
+					return React.createElement(component, mergedProps);
+				}
+			},
+
+
+
 			{	matches: 'enumValues', 
 
 				func: function getReactMUIComponent(field, controlProps, muiTheme) {
