@@ -201,7 +201,13 @@ defineObjectType('DateTime', 'Date', { _defaultValue: () => { return moment(new 
 
 	function fromString(str) {
 		if (typeof str === 'string') {
-			return moment(str);
+			let trimmed = str.trim();
+			if (trimmed.length > 0) {
+			    return moment(str);
+			}
+			else {
+				return undefined;
+			}
 		}
 		else {
 			return str;
