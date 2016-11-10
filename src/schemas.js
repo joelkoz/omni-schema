@@ -79,6 +79,10 @@ class OmniField {
 	}
 
 
+	get isUnique() {
+		return _.get(this, 'db.unique');
+	}
+
 	get defaultValue() {
 		if (this.isArray) {
 			return [];
