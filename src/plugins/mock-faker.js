@@ -48,12 +48,12 @@ let plugin = function() {
 	defineFakerType('String', (field) => { return faker.lorem.words() });
 
 	defineFakerType('Number', (field) => { 
-		let params;
+		let params = { min: Number.MIN_VALUE, max: Number.MAX_VALUE }
 		if (_.has(field, 'validation.min')) {
-			params = { min: field.validation.min };
+			params.min = field.validation.min;
 		}
 		if (_.has(field, 'validation.max')) {
-			params = Object.assign({}, params, { max: field.validation.max });
+			params.max = field.validation.max;
 		}
 		return faker.random.number(params);
 	});
@@ -78,12 +78,12 @@ let plugin = function() {
 	defineFakerType('CreditCardNumber', () => { return '4116817818840415' });
 
 	defineFakerType('Integer', (field) => {
-		let params;
+		let params = { min: Number.MIN_SAFE_INTEGER, max: Number.MAX_SAFE_INTEGER }
 		if (_.has(field, 'validation.min')) {
-			params = { min: field.validation.min };
+			params.min = field.validation.min;
 		}
 		if (_.has(field, 'validation.max')) {
-			params = Object.assign({}, params, { max: field.validation.max });
+			params.max = field.validation.max;
 		}
 		return Math.trunc(faker.random.number(params)); 
 	} );
