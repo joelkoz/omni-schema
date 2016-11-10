@@ -96,12 +96,16 @@ let plugin = function() {
 						mongooseField.required = true;
 					}
 
-					if (typeof(field.minVal) !== 'undefined' && this.mongoosedb.minValProperty) {
-					    mongooseField[this.mongoosedb.minValProperty] = field.minVal;
+					if (_.has(field, 'validation.min') && this.mongoosedb.minValProperty) {
+					    mongooseField[this.mongoosedb.minValProperty] = field.validation.min;
 					}
 
-					if (typeof(field.maxVal) !== 'undefined' && this.mongoosedb.maxValProperty) {
-					   mongooseField[this.mongoosedb.maxValProperty] = field.maxVal;
+					if (_.has(field, 'validation.max') && this.mongoosedb.maxValProperty) {
+					   mongooseField[this.mongoosedb.maxValProperty] = field.validation.max;
+					}
+
+					if (_.has(field, 'db.unique')) {
+					   mongooseField.unique = field.db.unique;
 					}
 
 					if (this.mongoosedb.type === String && this.mongoosedb.match) {

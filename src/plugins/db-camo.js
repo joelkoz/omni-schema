@@ -131,16 +131,16 @@ let plugin = function() {
 						camoField.required = true;
 					}
 
-					if (typeof(field.minVal) !== 'undefined') {
-					    camoField.min = field.minVal;
+					if (_.has(field, 'validation.min')) {
+					    camoField.min = field.validation.min;
 					}
 
-					if (typeof(field.maxVal) !== 'undefined') {
-					   camoField.max = field.maxVal;
+					if (_.has(field, 'validation.max')) {
+					   camoField.max = field.validation.max;
 					}
 
-					if (_.get(field, 'db.unique')) {
-						camoField.unique = true;
+					if (_.has(field, 'db.unique')) {
+					   camoField.unique = field.db.unique;
 					}
 
 					if (this.camodb.type === String && this.enumValues) {

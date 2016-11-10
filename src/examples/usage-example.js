@@ -18,11 +18,11 @@ const ContactSchema = OmniSchema.compile({
                       		lastName: { type: 'LastName', required: true }, // If you need to vary from the defaults
                       		sex: {type: 'Sex', ui: { presentation: 'radio' } }, // Adding a hint to one of the plugins
                       		phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
-                      		email: { type: 'Email' },
+                      		email: { type: 'Email', db: { unique: true} },
                       		birthdate: { type: 'Date' },
                       		favorite: { type: 'YesNo', label: 'Add this person to your favorites?' },
                       		balance: { type: 'Currency', default: 123.45 },
-                          age: { type: 'Integer', validation: { min: 0 }},
+                          age: { type: 'Integer', validation: { min: 13, max: 110 }},
                           ownerId: { type: 'Integer', ui: { exclude: true }}, // Internal field - no user editing
                   	  });
 
@@ -67,7 +67,7 @@ connect(uri).then(() => {
 
 
         // Now, see if it is valid using the Joi validator plugin...
-        console.log('\n\nNow validating record...');
+        console.log('\n\nValidating the db record with a UI validator...');
 
 
         // Pass TRUE to getValidator() to indicate we want a validator
@@ -89,6 +89,7 @@ connect(uri).then(() => {
         // Now, lets try to validate the sanitized UI record instead.
         // Also - let's use the alternative "try/catch" version of 
         // validation from the plugin...
+        console.log('Trying again with a UI record...');
         try {
             let validatedRecord = uiValidator.validate(uiRecord);
             console.log('Record validated correctly');

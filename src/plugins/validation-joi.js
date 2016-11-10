@@ -133,12 +133,12 @@ let plugin = function() {
 
 					let joiField = eval(joiFieldCode);
 
-					if (typeof field.minVal !== 'undefined') {
-					    joiField = joiField.min(field.minVal);
+					if (_.has(field, 'validation.min')) {
+					    joiField = joiField.min(field.validation.min);
 					}
 
-					if (typeof field.maxVal !== 'undefined') {
-					    joiField = joiField.max(field.maxVal);
+					if (_.has(field, 'validation.max')) {
+					    joiField = joiField.max(field.validation.max);
 					}
 
 					if (this.joiSpec.type === 'string' && this.enumValues) {

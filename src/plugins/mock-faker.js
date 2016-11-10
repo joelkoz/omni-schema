@@ -2,7 +2,7 @@
 
 const OmniTypes = require('../types');
 const OmniSchema = require('../schemas');
-
+const _ = require('lodash');
 
 // mock-faker.js
 // An OmniSchema plugin to generate mock data for a record that matches the schema.
@@ -45,31 +45,52 @@ let plugin = function() {
 	}
 
 	// MUST at least define entries for Javascript primatives...
-	defineFakerType('String', faker.lorem.words);
-	defineFakerType('Number', faker.random.number);
-	defineFakerType('Boolean', faker.random.boolean);
-	defineFakerType('DateTime', faker.date.recent);
+	defineFakerType('String', (field) => { return faker.lorem.words() });
+
+	defineFakerType('Number', (field) => { 
+		let params;
+		if (_.has(field, 'validation.min')) {
+			params = { min: field.validation.min };
+		}
+		if (_.has(field, 'validation.max')) {
+			params = Object.assign({}, params, { max: field.validation.max });
+		}
+		return faker.random.number(params);
+	});
+
+	defineFakerType('Boolean', (field) => { return faker.random.boolean() });
+	defineFakerType('DateTime', (field) => { return faker.date.recent() });
 
 	// And now, define specialized controls for the specialzed data types that vary
 	// from our defaults. Inheritance will take care of the rest...
-	defineFakerType('Text',faker.lorem.paragraph);
+	defineFakerType('Text',(field) => { return faker.lorem.paragraph() });
 	defineFakerType('FullName', () => { return `${faker.name.firstName()} ${faker.name.lastName()}`; });
-	defineFakerType('FirstName', faker.name.firstName);
-	defineFakerType('LastName', faker.name.lastName);
-	defineFakerType('Password', faker.internet.password);
-	defineFakerType('Phone', faker.phone.phoneNumber);
-	defineFakerType('Email', faker.internet.email);
-	defineFakerType('Url', faker.internet.url);
-	defineFakerType('StreetAddress', faker.address.streetAddress);
-	defineFakerType('City', faker.address.city);
-	defineFakerType('State', faker.address.stateAbbr);
-	defineFakerType('PostalCode', faker.address.zipCode);
+	defineFakerType('FirstName', (field) => { return faker.name.firstName() });
+	defineFakerType('LastName', (field) => { return faker.name.lastName() });
+	defineFakerType('Password', (field) => { return faker.internet.password() });
+	defineFakerType('Phone', (field) => { return faker.phone.phoneNumber() });
+	defineFakerType('Email', (field) => { return faker.internet.email() });
+	defineFakerType('Url', (field) => { return faker.internet.url() });
+	defineFakerType('StreetAddress', (field) => { return faker.address.streetAddress() });
+	defineFakerType('City', (field) => { return faker.address.city() });
+	defineFakerType('State', (field) => { return faker.address.stateAbbr() });
+	defineFakerType('PostalCode', (field) => { return faker.address.zipCode() });
 	defineFakerType('CreditCardNumber', () => { return '4116817818840415' });
 
-	defineFakerType('Integer', () => { return Math.trunc(faker.random.number()); } );
-	defineFakerType('Currency', fakeCurrency );
+	defineFakerType('Integer', (field) => {
+		let params;
+		if (_.has(field, 'validation.min')) {
+			params = { min: field.validation.min };
+		}
+		if (_.has(field, 'validation.max')) {
+			params = Object.assign({}, params, { max: field.validation.max });
+		}
+		return Math.trunc(faker.random.number(params)); 
+	} );
 
-	defineFakerType('Sex', () => { return faker.random.boolean() ? 'F' : 'M'});
+	defineFakerType('Currency', (field) => { return fakeCurrency() });
+
+	defineFakerType('Sex', (field) => { return faker.random.boolean() ? 'F' : 'M'});
 
 	// Now, mix in functionality to OmniSchema...
 	OmniSchema.mixin({
@@ -117,7 +138,7 @@ let plugin = function() {
 			{	matches: 'fakerSpec',
 
 				func: function getMockData(field) {
-					return this.fakerSpec.getMockData();
+					return this.fakerSpec.getMockData(field);
 				}
 
 			},

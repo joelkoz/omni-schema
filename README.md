@@ -210,6 +210,7 @@ using one of the below will make your plugin more useful to pre existing schema 
 | type | A string that matches any data type defined in OmniSchema.Types, or any OmniSchema.Type value | The only required field
 | label | any string | If not specified, a label will be formulated from the field name
 | required | boolean | A shortcut property for `validation.required`
+| db.unique | boolean | If true, this field should be considered 'unique' in any collection of these entries. Primary used in databases.
 | ui.exclude | boolean | If true, this field will be excluded from any generated user interfaces and UI validations
 | ui.presentation | 'select', radio', 'toggle', 'checkbox' | For enumerations, a way to specify the UI presentation if you do not like the default value.  'toggle' and 'checkbox' are only valid for enumerations that are also boolean values
 | validation.min | number | For numbers, the minimum allowed number.  For strings, the minimum allowed length
