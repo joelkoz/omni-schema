@@ -127,8 +127,9 @@ let plugin = function() {
 
 				let schema = this;
 				let code = `<form${OmniSchema.html5.getPropsAsAttributeString(formProps)} >\n`;
-				for (let fieldName in schema) {
-					let field = schema[fieldName];
+				let fl = this.getFieldList();
+				for (let fieldName of fl) {
+					let field = schema.getField(fieldName);
 					if ((field instanceof OmniSchema.OmniField) && !field.uiExclude) {
 						let defaultValue = _.get(defaultData, field.name);
 						code = code.concat(field.getHtml(defaultValue), '\n');

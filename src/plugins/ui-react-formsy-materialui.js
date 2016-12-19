@@ -226,8 +226,9 @@ let plugin = function() {
 						let children = [];
 
 						// eslint-disable-next-line
-						for (let fieldName in schema) {
-							let field = schema[fieldName];
+						let fl = schema.getFieldList();
+						for (let fieldName of fl) {
+							let field = schema.getField(fieldName);
 							if ((field instanceof OmniSchema.OmniField) && !field.uiExclude) {
 								let mergedProps = Object.assign(
 										{ style: { display: 'block',

@@ -63,8 +63,9 @@ let plugin = function() {
 
 				let omniSchema = this;
 				let joiSchemaDef = {};
-				for (let fieldName in omniSchema) {
-					let field = omniSchema[fieldName];
+				let fl = this.getFieldList();
+				for (let fieldName of fl) {
+					let field = omniSchema.getField(fieldName);
 					if ((field instanceof OmniSchema.OmniField) && (!uiExclude || !field.uiExclude)) {
 						let joiField = field.getJoiField();
 					    joiSchemaDef[fieldName] = joiField;

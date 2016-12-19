@@ -105,6 +105,27 @@ class OmniField {
 
 class OmniSchema {
 
+	constructor(collectionName, parentSchema) {
+		if (collectionName) {
+			Object.defineProperty(this, '__collectionName', { enumerable: false, value: collectionName, writeable: true, configurable: true });
+		}
+
+		if (parentSchema) {
+			Object.defineProperty(this, '__parentSchema', { enumerable: false, value: parentSchema, writeable: true, configurable: true });
+		}
+	}
+
+	get collectionName() {
+		return this.__collectionName;
+	}
+
+	get parentSchema() {
+		return this.__parentSchema;
+	}
+
+	get isSubClass() {
+		return this.hasOwnProperty('__parentSchema');
+	}
 
 	static get Types() {
 		return OmniTypes;
@@ -114,7 +135,12 @@ class OmniSchema {
 	 * An OmniSchema factory method that compiles a schema template and returns
 	 * an OmniSchema definition.
 	 * @param templateObj {object} The schema descriptor to translate into
-	 * an OmniSchema instance. Here is an example template:
+	 * an OmniSchema instance. 
+	 * @param collectionName {String} The name of a collection that holds this schema (optional).
+	 * Primarily for use by persistence plugins
+	 * @param parentSchema {OmniSchema} For object inheritance, if this schema inherits field
+	 * definitions from another schema (optional)
+	 * Here is an example template:
 	 * <code>
 	 *	{	firstName: { type: 'FirstName', required: true },
 	 *		lastName: { type: OmniTypes.LastName }, 
@@ -125,9 +151,9 @@ class OmniSchema {
 	 *	}
 	 *</code>
 	 */
-    static compile(templateObj) {
+    static compile(templateObj, collectionName, parentSchema) {
 
-		let schema = new OmniSchema();
+		let schema = new OmniSchema(collectionName, parentSchema);
 
 		// eslint-disable-next-line
 		for (let fieldName in templateObj) {
@@ -179,14 +205,31 @@ class OmniSchema {
 
 
 	/**
+	* Returns the OmniField object for the specified field name, or undefined if
+	* the field does not exist. If this schema is a subClass, parent schemas are
+	* also checked for the field name if it can not be found in the current schema.
+	*/
+	getField(fieldName) {
+		let field = this[fieldName];
+		if (!field) {
+			if (this.parentSchema) {
+				field = this.parentSchema.getField(fieldName);
+			}
+		}
+		return field;
+	}
+
+
+	/**
 	 * Calls the callBack function for each field definition in the schema, passing
 	 * the OmniField definition as the sole parameter.  If uiOnly is TRUE,
 	 * the callback will only be called for fields that are marked as part of the UI
 	 * (i.e. do NOT have the ui.exclude property set to true).
 	 */
-	forEachField(callBack, uiOnly) {
-		for (let fieldName in this) {
-			let field = this[fieldName];
+	forEachField(callBack, uiOnly, excludeInherited) {
+		let fl = this.getFieldList(uiOnly, excludeInherited);
+		for (let fieldName of fl) {
+			let field = this.getField(fieldName);
 			if ((field instanceof OmniSchema.OmniField) && (!uiOnly || !field.uiExclude)) {
 				callBack(field);
 			}
@@ -201,7 +244,7 @@ class OmniSchema {
 	 * that are not excluded from the user interface with the 'ui.exclude'
 	 * property.
 	 */
-	getFieldList(uiOnly) {
+	getFieldList(uiOnly, excludeInherited) {
 
 		let propName;
 		if (uiOnly) {
@@ -214,7 +257,17 @@ class OmniSchema {
 		// Return a memoirized list
 		if (!this[propName]) {
 			let uiKeys = [];
-			this.forEachField(function (field) { uiKeys.push(field.name); }, uiOnly);
+			if (!excludeInherited && this.isSubClass) {
+				uiKeys = uiKeys.concat(this.parentSchema.getFieldList(uiOnly));
+			}
+
+			for (let fieldName in this) {
+				let field = this[fieldName];
+				if ((field instanceof OmniSchema.OmniField) && (!uiOnly || !field.uiExclude)) {
+					uiKeys.push(field.name);
+				}
+			} // for
+
 			Object.defineProperty(this, propName, { configurable: true, 
 												    enumerable: false, 
 													writeable: true, 

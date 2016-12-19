@@ -13,18 +13,23 @@ OmniCamo.plugin();
 
 const Types = OmniSchema.Types;
 
+
+const PersonSchema = OmniSchema.compile({
+                          firstName: Types.FirstName, // The simplest way to declare a field
+                          lastName: { type: 'LastName', required: true }, // If you need to vary from the defaults
+                          sex: {type: 'Sex', ui: { presentation: 'radio' } }, // Adding a hint to one of the plugins
+                          birthdate: { type: 'Date' },
+                      }, 'People');
+
+
 const ContactSchema = OmniSchema.compile({
-                     		  firstName: Types.FirstName, // The simplest way to declare a field
-                      		lastName: { type: 'LastName', required: true }, // If you need to vary from the defaults
-                      		sex: {type: 'Sex', ui: { presentation: 'radio' } }, // Adding a hint to one of the plugins
                       		phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
                       		email: { type: 'Email', db: { unique: true} },
-                      		birthdate: { type: 'Date' },
                       		favorite: { type: 'YesNo', label: 'Add this person to your favorites?' },
                       		balance: { type: 'Currency', default: 123.45 },
                           age: { type: 'Integer', validation: { min: 13, max: 110 }},
                           ownerId: { type: 'Integer', ui: { exclude: true }}, // Internal field - no user editing
-                  	  });
+                  	  }, 'Contacts', PersonSchema);
 
 console.log(`The fields in our schema are ${JSON.stringify(ContactSchema.getFieldList())}`);
 

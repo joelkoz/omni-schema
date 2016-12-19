@@ -59,9 +59,10 @@ let plugin = function() {
 
 				let omniSchema = this;
 				let mongooseSchemaDef = {};
-				for (let fieldName in omniSchema) {
+				let fl = this.getFieldList();
+				for (let fieldName of fl) {
 					if (fieldName !== '_id') {
-						let field = omniSchema[fieldName];
+						let field = omniSchema.getField(fieldName);
 						if (field instanceof OmniSchema.OmniField) {
 							let mongooseField = field.getMongooseField();
 						    mongooseSchemaDef[fieldName] = mongooseField;

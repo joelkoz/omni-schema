@@ -61,8 +61,9 @@ let plugin = function() {
 				// Build the schema...
 				let omniSchema = this;
 				let camoSchemaDef = {};
-				for (let fieldName in omniSchema) {
-					let field = omniSchema[fieldName];
+				let fl = this.getFieldList();
+				for (let fieldName of fl) {
+					let field = omniSchema.getField(fieldName);
 					if (field instanceof OmniSchema.OmniField) {
 						// Do NOT add "_id" field to schema - it is
 						// used internally by camo...
