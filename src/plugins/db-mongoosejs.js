@@ -69,7 +69,16 @@ let plugin = function() {
 						}
 					}
 				}
-				return new mongoose.Schema(mongooseSchemaDef);
+
+
+				let options = {};
+
+				if (omniSchema.hasChildren || omniSchema.isSubClass) {
+					// This schema is part of a hierarchy...
+					options.discriminatorKey = 'kind';
+				}
+
+				return new mongoose.Schema(mongooseSchemaDef, options);
 			}
 		},
 

@@ -112,20 +112,50 @@ class OmniSchema {
 
 		if (parentSchema) {
 			Object.defineProperty(this, '__parentSchema', { enumerable: false, value: parentSchema, writeable: true, configurable: true });
+			parentSchema.hasChildren = true;
 		}
 	}
+
 
 	get collectionName() {
 		return this.__collectionName;
 	}
 
+
 	get parentSchema() {
 		return this.__parentSchema;
 	}
 
+
 	get isSubClass() {
 		return this.hasOwnProperty('__parentSchema');
 	}
+
+
+	get hasChildren() {
+		return this.__hasChildren;
+	}
+
+
+	set hasChildren(isAParent) {
+		if (!this.hasOwnProperty('__hasChildren')) {
+			Object.defineProperty(this, '__hasChildren', { enumerable: false, value: isAParent, writeable: true, configurable: true });
+		}
+		else {
+			this.__hasChildren = isAParent;
+		}
+	}
+
+
+	get rootSchema() {
+		if (this.parentSchema) {
+			return this.parentSchema.rootSchema;
+		}
+		else {
+			return this;
+		}
+	}
+
 
 	static get Types() {
 		return OmniTypes;
@@ -138,7 +168,7 @@ class OmniSchema {
 	 * an OmniSchema instance. 
 	 * @param collectionName {String} The name of a collection that holds this schema (optional).
 	 * Primarily for use by persistence plugins
-	 * @param parentSchema {OmniSchema} For object inheritance, if this schema inherits field
+	 * @param parentSchema {OmniSchema} For object inheritance if this schema inherits field
 	 * definitions from another schema (optional)
 	 * Here is an example template:
 	 * <code>
