@@ -177,7 +177,12 @@ let plugin = function() {
 		onField: {
 			func: function getCamoField() {
 				if (this.type instanceof OmniSchema) {
-					return this.type.getEmbeddedCamoClass();
+					if (this.persistence === 'embed') {
+						return this.type.getEmbeddedCamoClass();
+					}
+					else {
+						return this.type.getCamoClass();
+					}
 				}
 				else if (!this.type.getCamoField) {
 					throw new Error('getCamoField has not been defined for datatype ' + this.type.name);

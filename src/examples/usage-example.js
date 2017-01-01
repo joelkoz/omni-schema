@@ -32,7 +32,7 @@ const AddressSchema = OmniSchema.compile({
 const ContactSchema = OmniSchema.compile({
                       		phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
                       		email: { type: 'Email', db: { unique: true} },
-                          addresses: [AddressSchema], // How to reference another schema
+                          addresses: [{ type: AddressSchema, db: { persistence: 'embed'} }], // How to reference another schema
                       		favorite: { type: 'YesNo', label: 'Add this person to your favorites?' },
                       		balance: { type: 'Currency', default: 123.45 },
                           age: { type: 'Integer', validation: { min: 13, max: 110 }},

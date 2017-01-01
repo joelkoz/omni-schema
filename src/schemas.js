@@ -83,6 +83,10 @@ class OmniField {
 		return _.get(this, 'db.unique');
 	}
 
+	get persistence() {
+		return _.get(this, 'db.persistence');
+	}
+
 	get defaultValue() {
 		if (this.isArray) {
 			return [];
