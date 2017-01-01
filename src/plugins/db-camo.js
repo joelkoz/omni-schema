@@ -9,6 +9,8 @@ const _ = require('lodash');
 // Uses: Camo - https://github.com/scottwrobinson/camo
 
 const Document = require('camo').Document;
+const EmbeddedDocument = require('camo').EmbeddedDocument;
+
 
 // Hints for effective plugin development:
 // 1. Store all plugin specific properties for data types inside a name spaced property
@@ -27,6 +29,9 @@ const Document = require('camo').Document;
 
 // Our namespace for this plugin
 OmniSchema.camo = {};
+OmniSchema.camo.schemas = {};
+OmniSchema.camo.models = {};
+OmniSchema.camo.embedded = {};
 
 // Our "define..Type" method to decorate the data types with attributes that
 // tell us which Camo schema types to use for each OmniType...
@@ -58,6 +63,11 @@ let plugin = function() {
 
 			{ func: function getCamoSchema() {
 
+				// If we have already defined this schema, return the singleton...
+				if (this.collectionName && OmniSchema.camo.schemas[this.collectionName]) {
+					return OmniSchema.camo.schemas[this.collectionName];
+				}
+
 				// Build the schema...
 				let omniSchema = this;
 				let camoSchemaDef = {};
@@ -69,16 +79,28 @@ let plugin = function() {
 						// used internally by camo...
 						if (field.name !== '_id' && field.name !== '_schema') {
 						    let camoField = field.getCamoField();
-					        camoSchemaDef[fieldName] = camoField;
+						    if (camoField) {
+					        	camoSchemaDef[fieldName] = camoField;
+					        }
 					    }
 					}
 				}
+
+				OmniSchema.camo.schemas[this.collectionName] = camoSchemaDef;
 
 				return camoSchemaDef;
 
 			}},
 
 			{ func: function getCamoClass(className) {
+
+				if (className === undefined) {
+					className = this.collectionName;
+				}
+
+				if (className && OmniSchema.camo.models[className]) {
+					return OmniSchema.camo.models[className];
+				}
 
 				// Return a class definition that inherits from camoDocument...
 				return function (camoSchemaDef) {
@@ -99,16 +121,65 @@ let plugin = function() {
 						}
 					}
 
+					// Change the name of the constructor to the class name...
+					Object.defineProperty(DynamicCamoDoc.prototype.constructor, 'name', {value: className, configurable: true});
+
+					OmniSchema.camo.models[className] = DynamicCamoDoc;
+
 					return DynamicCamoDoc;
 
 				}(this.getCamoSchema());
 			}},
 
+			{ func: function getEmbeddedCamoClass(className) {
+
+				if (className === undefined) {
+					className = this.collectionName;
+				}
+
+				if (className && OmniSchema.camo.models[className]) {
+					return OmniSchema.camo.embedded[className];
+				}
+
+				// Return a class definition that inherits from camoDocument...
+				return function (camoSchemaDef) {
+
+					// Create and return a 'class' that inherits from _Document...
+					let _schemaDef = camoSchemaDef;
+					let _className = className;
+
+					class DynamicCamoDoc extends EmbeddedDocument {
+						
+						constructor() {
+							super();
+						    this.schema(_schemaDef);
+						};
+
+						static collectionName() {
+							return _className;
+						}
+					}
+
+					// Change the name of the constructor to the class name...
+					Object.defineProperty(DynamicCamoDoc.prototype.constructor, 'name', {value: className, configurable: true});
+
+					OmniSchema.camo.embedded[className] = DynamicCamoDoc;
+
+					return DynamicCamoDoc;
+
+				}(this.getCamoSchema());
+			}},
+
+
+
 		],
 
 		onField: {
 			func: function getCamoField() {
-				if (!this.type.getCamoField) {
+				if (this.type instanceof OmniSchema) {
+					return this.type.getEmbeddedCamoClass();
+				}
+				else if (!this.type.getCamoField) {
 					throw new Error('getCamoField has not been defined for datatype ' + this.type.name);
 				}
 				return this.type.getCamoField(this);

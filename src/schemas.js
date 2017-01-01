@@ -200,7 +200,7 @@ class OmniSchema {
 
 			let omniType, required, label, otherProps;
 
-			if (prop instanceof OmniTypes.DataType) {
+			if (prop instanceof OmniTypes.DataType || prop instanceof OmniSchema) {
 				omniType = prop;
 				otherProps = {};
 			}
@@ -208,7 +208,7 @@ class OmniSchema {
 				let type = prop.type;
 				label = prop.label;
 
-				if (type instanceof OmniTypes.DataType) {
+				if (type instanceof OmniTypes.DataType || type instanceof OmniSchema) {
 					omniType = type;
 				}
 				else {
@@ -312,10 +312,40 @@ class OmniSchema {
 	* Returns a copy of obj that contains only fields that are present in this
 	* schema.  If uiOnly is TRUE, the returned object will include only
 	* fields that are part of the UI definition (i.e. do NOT have the ui.exclude
-	* property set to TRUE)
+	* property set to TRUE). If obj is not an object, "undefined" is returned.
 	*/
 	sanitize(obj, uiOnly) {
-		return _.pick(obj, this.getFieldList(uiOnly));
+
+		if (typeof(obj) !== 'object') {
+			return undefined;
+		}
+
+		let fieldList = this.getFieldList(uiOnly);
+		let result = {};
+
+		for (let fieldName of fieldList) {
+			let fieldDef = this.getField(fieldName);
+			if ((fieldDef instanceof OmniSchema.OmniField) && (!uiOnly || !fieldDef.uiExclude)) {
+				let fieldVal = obj[fieldName];
+				if (fieldDef.type instanceof OmniSchema) {
+					if (Array.isArray(fieldVal) && fieldDef.isArray) {
+						let array = [];
+						fieldVal.forEach(function (element) {
+							array.push(fieldDef.type.sanitize(element, uiOnly));
+						});
+						result[fieldName] = array;
+					}
+					else {
+						result[fieldName] = fieldDef.type.sanitize(fieldVal, uiOnly);
+					}
+				}
+				else {
+					result[fieldName] = fieldVal;
+				}
+			}
+		} // for
+
+		return result;
 	}
 
 
@@ -336,7 +366,7 @@ class OmniSchema {
 
 		// eslint-disable-next-line
 		for (let fieldName in obj) {
-			let field = this[fieldName];
+			let field = this.getField(fieldName);
 			if (field instanceof OmniSchema.OmniField) {
 				let modelVal = obj[fieldName];
 				if (modelVal === null) {

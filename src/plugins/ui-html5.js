@@ -80,8 +80,8 @@ let plugin = function() {
 	defineHtmlType('DateTime', 'input', {type: 'datetime-local'});
 
 
-	function getEnumAsSelect(field, controlProps, defaultValue) {
-		let code = `<select size="1" name="${field.name}" ${field.isRequired?'required="required"':''}>\n`;
+	function getEnumAsSelect(field, controlProps, defaultValue, fieldNamePrefix) {
+		let code = `<select size="1" name="${fieldNamePrefix}${field.name}" ${field.isRequired?'required="required"':''}>\n`;
 		let dt = field.type;
 		let strDefault;
 		if (typeof defaultValue !== 'undefined' && defaultValue !== null) {
@@ -96,7 +96,7 @@ let plugin = function() {
 
 
 
-	function getEnumAsRadio(field, controlProps, defaultValue) {
+	function getEnumAsRadio(field, controlProps, defaultValue, fieldNamePrefix) {
 		let code = '';
 		let dt = field.type;
 		_.forEach(dt.enumValues, function(ev, i) {
@@ -104,37 +104,30 @@ let plugin = function() {
 			if (ev.value === defaultValue) {
 				mergedProps.checked = true;
 			}
-			code = code.concat(`<input${OmniSchema.html5.getPropsAsAttributeString(mergedProps, 'elementName')} ${field.isRequired?'required="required" ':''}name="${field.name}" value="${ev.value}" />`);
+			code = code.concat(`<input${OmniSchema.html5.getPropsAsAttributeString(mergedProps, 'elementName')} ${field.isRequired?'required="required" ':''}name="${fieldNamePrefix}${field.name}" value="${ev.value}" />`);
 			code = code.concat(`&nbsp;${ev.label}<br/>\n`);
 		})
 		return code;
 	}
 
 
-	function getEnumAsCheckbox(field, controlProps, defaultValue) {
+	function getEnumAsCheckbox(field, controlProps, defaultValue, fieldNamePrefix) {
 			let mergedProps = Object.assign({}, controlProps, { type: 'checkbox' });
 			if (defaultValue) {
 				mergedProps.checked = true;
 			}
-		return `<input${OmniSchema.html5.getPropsAsAttributeString(mergedProps, 'elementName')} ${field.isRequired?'required="required" ':''}name="${field.name}" />`;
+		return `<input${OmniSchema.html5.getPropsAsAttributeString(mergedProps, 'elementName')} ${field.isRequired?'required="required" ':''}name="${fieldNamePrefix}${field.name}" />`;
 	}
 
 	// Now, mix in functionality to OmniSchema...
 	OmniSchema.mixin({
 
-		onSchema: {
-			func: function getHtmlForm(submitButtonName, formProps, defaultData) {
+		onSchema: [
+			{ func: function getHtmlForm(submitButtonName, formProps, defaultData) {
 
 				let schema = this;
 				let code = `<form${OmniSchema.html5.getPropsAsAttributeString(formProps)} >\n`;
-				let fl = this.getFieldList();
-				for (let fieldName of fl) {
-					let field = schema.getField(fieldName);
-					if ((field instanceof OmniSchema.OmniField) && !field.uiExclude) {
-						let defaultValue = _.get(defaultData, field.name);
-						code = code.concat(field.getHtml(defaultValue), '\n');
-					}
-				}
+				code = code.concat(schema.getHtmlFields(defaultData, ''));
 				if (submitButtonName) {
 					code = code.concat(`<input type="submit" value="${submitButtonName}" />\n`);
 				}
@@ -143,15 +136,38 @@ let plugin = function() {
 				}
 				code = code.concat('</form>\n');
 				return code;
-			}
-		},
+			}},
+
+
+			{ func: function getHtmlFields(defaultData, fieldNamePrefix) {
+
+				let schema = this;
+				let code = '';
+				let fl = this.getFieldList();
+				for (let fieldName of fl) {
+					let field = schema.getField(fieldName);
+					if ((field instanceof OmniSchema.OmniField) && !field.uiExclude) {
+						let defaultValue = _.get(defaultData, field.name);
+						code = code.concat(field.getHtml(defaultValue, fieldNamePrefix), '\n');
+					}
+				}
+				return code;
+			}},
+			
+
+
+		],
 
 		onField: {
-			func: function getHtml(defaultValue) {
-				if (!this.type.getHtml) {
+			func: function getHtml(defaultValue, fieldNamePrefix) {
+				if (this.type instanceof OmniSchema) {
+					// TODO handle references to other schemas...
+					return `<div class="_${this.type.collectionName} _obj">\n<label class="_objLabel">${this.label}</label>\n${this.type.getHtmlFields(defaultValue[this.name], this.name + '.')}</div>`;
+				}
+				else if (!this.type.getHtml) {
 					throw new Error('getHtml has not been defined for datatype ' + this.type.name);
 				}
-				return `<label>${this.label} ${this.type.getHtml(this, {}, defaultValue)}</label>`;
+				return `<label>${this.label} ${this.type.getHtml(this, {}, defaultValue, fieldNamePrefix)}</label>`;
 			}
 		},
 
@@ -161,31 +177,31 @@ let plugin = function() {
 					htmlSpec: { elementName: 'input'}
 				},
 
-				func: function getHtml(field, controlProps, defaultValue) {
+				func: function getHtml(field, controlProps, defaultValue, fieldNamePrefix) {
 					if (typeof defaultValue !== 'undefined') {
 						controlProps.value = defaultValue;
 					}
 					let mergedProps = Object.assign({}, this.htmlSpec, controlProps);
-					return `<input${OmniSchema.html5.getPropsAsAttributeString(mergedProps, 'elementName')} ${field.isRequired?'required="required" ':''}name="${field.name}" />`;
+					return `<input${OmniSchema.html5.getPropsAsAttributeString(mergedProps, 'elementName')} ${field.isRequired?'required="required" ':''}name="${fieldNamePrefix}${field.name}" />`;
 				}
 			},
 
 			{	matches: 'enumValues',
 
-				func: function getHtml(field, controlProps, defaultValue) {
+				func: function getHtml(field, controlProps, defaultValue, fieldNamePrefix) {
 					let presentation = _.get(field, 'ui.presentation');
 					if (presentation) {
 						// User has explicitly requested a presentation for this enumeration...
 						switch (presentation) {
 							case 'select':
-								return getEnumAsSelect(field, Object.assign({}, this.htmlSpec, controlProps), defaultValue);
+								return getEnumAsSelect(field, Object.assign({}, this.htmlSpec, controlProps), defaultValue, fieldNamePrefix);
 
 							case 'radio':
-								return getEnumAsRadio(field, Object.assign({}, this.htmlSpec, controlProps), defaultValue);
+								return getEnumAsRadio(field, Object.assign({}, this.htmlSpec, controlProps), defaultValue, fieldNamePrefix);
 
 							case 'checkbox':
 								if (field.type.jsType === 'boolean') {
-									return getBoolAsCheckbox(field, Object.assign({}, this.htmlSpec, controlProps), defaultValue);
+									return getBoolAsCheckbox(field, Object.assign({}, this.htmlSpec, controlProps), defaultValue, fieldNamePrefix);
 								}
 								break;
 
@@ -195,7 +211,7 @@ let plugin = function() {
 					}
 
 					// Return default presentation...
-					return getEnumAsSelect(field, Object.assign({}, this.htmlSpec, controlProps), defaultValue);
+					return getEnumAsSelect(field, Object.assign({}, this.htmlSpec, controlProps), defaultValue, fieldNamePrefix);
 				}
 
 			},

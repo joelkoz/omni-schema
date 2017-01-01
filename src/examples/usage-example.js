@@ -13,7 +13,6 @@ OmniCamo.plugin();
 
 const Types = OmniSchema.Types;
 
-
 const PersonSchema = OmniSchema.compile({
                           firstName: Types.FirstName, // The simplest way to declare a field
                           lastName: { type: 'LastName', required: true }, // If you need to vary from the defaults
@@ -22,9 +21,18 @@ const PersonSchema = OmniSchema.compile({
                       }, 'People');
 
 
+const AddressSchema = OmniSchema.compile({
+   street: { type: 'StreetAddress' },
+   city: { type: 'City' },
+   state: { type: 'State' },
+   zip: { type: 'PostalCode' }
+}, 'Addresses');
+
+
 const ContactSchema = OmniSchema.compile({
                       		phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
                       		email: { type: 'Email', db: { unique: true} },
+                          addresses: [AddressSchema], // How to reference another schema
                       		favorite: { type: 'YesNo', label: 'Add this person to your favorites?' },
                       		balance: { type: 'Currency', default: 123.45 },
                           age: { type: 'Integer', validation: { min: 13, max: 110 }},
@@ -44,7 +52,8 @@ let uri = 'nedb://memory'; // save to an in memory NeDB database
 connect(uri).then(() => {
 
     // Create a Camo document to store our data...
-    let Contact = ContactSchema.getCamoClass('contacts');
+    let Contact = ContactSchema.getCamoClass();
+    let Address = AddressSchema.getEmbeddedCamoClass();
 
 
     // Next, generate some mock data with the Faker plugin...
@@ -55,6 +64,7 @@ connect(uri).then(() => {
 
     // Save it to our database...
     console.log('\n\nSaving record to database...');
+
     let dbRecord = Contact.create(mockRecord);
     dbRecord.save().then(() => {
         console.log('\n\nDatabase record values:');
