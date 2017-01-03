@@ -3,18 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "devDependencies": {
-    "react-scripts": "0.7.0"
+    "react-scripts": "0.8.4"
   },
   "dependencies": {
-    "formsy-material-ui": "^0.5.2",
+    "formsy-material-ui": "^0.5.3",
     "formsy-react": "^0.18.1",
-    "lodash": "^4.16.4",
-    "material-ui": "^0.16.1",
-    "moment": "^2.15.2",
-    "omni-schema": "^1.0.1",
-    "react": "^15.3.2",
-    "react-dom": "^15.3.2",
-    "react-tap-event-plugin": "^1.0.0"
+    "lodash": "^4.17.4",
+    "material-ui": "^0.16.6",
+    "moment": "^2.17.1",
+    "omni-schema": "^1.6.0",
+    "react": "^15.4.1",
+    "react-dom": "^15.4.1",
+    "react-tap-event-plugin": "^2.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
