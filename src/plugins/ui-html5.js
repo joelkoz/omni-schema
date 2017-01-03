@@ -162,7 +162,7 @@ let plugin = function() {
 			func: function getHtml(defaultValue, fieldNamePrefix) {
 				if (this.type instanceof OmniSchema) {
 					// TODO handle references to other schemas...
-					return `<div class="_${this.type.collectionName} _obj">\n<label class="_objLabel">${this.label}</label>\n${this.type.getHtmlFields(defaultValue[this.name], this.name + '.')}</div>`;
+					return `<div class="_${this.type.collectionName} _obj">\n<label class="_objLabel">${this.label}</label>\n${this.type.getHtmlFields(defaultValue[this.name], fieldNamePrefix + this.name + '.')}</div>`;
 				}
 				else if (!this.type.getHtml) {
 					throw new Error('getHtml has not been defined for datatype ' + this.type.name);
