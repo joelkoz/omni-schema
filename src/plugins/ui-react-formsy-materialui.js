@@ -27,6 +27,9 @@ const FormsyToggle = require('formsy-material-ui/lib/FormsyToggle').default;
 const MenuItem = require('material-ui/MenuItem').default;
 const RaisedButton = require('material-ui/RaisedButton').default;
 const fade = require('material-ui/utils/colorManipulator').fade;
+const Card = require('material-ui/Card').Card;
+const CardText = require('material-ui/Card').CardText;
+const CardHeader = require('material-ui/Card').CardHeader;
 
 // Hints for effective plugin development:
 // 1. Store all plugin specific properties inside a name spaced property
@@ -106,7 +109,7 @@ let plugin = function() {
 	}
 
 
-	function getEnumAsSelect(field, controlProps, muiTheme) {
+	function getEnumAsSelect(field, controlProps, muiTheme, fieldNamePrefix) {
 		let dt = field.type;
 		function getChildren() {
 			let children = [];
@@ -119,7 +122,7 @@ let plugin = function() {
 		}
 
 		let mergedProps = Object.assign(
-							 { name: field.name, 
+							 { name: fieldNamePrefix + field.name, 
 							   floatingLabelText: field.label,
 							   labelStyle: { top: '20px' },
 							   errorStyle: { marginTop: '15px' },
@@ -137,7 +140,7 @@ let plugin = function() {
 	}
 
 
-	function getEnumAsRadio(field, controlProps, muiTheme) {
+	function getEnumAsRadio(field, controlProps, muiTheme, fieldNamePrefix) {
 		let dt = field.type;
 		function getChildren() {
 			let children = [];
@@ -152,7 +155,7 @@ let plugin = function() {
 		}
 
 		let mergedProps = Object.assign(
-									 { name: field.name, 
+									 { name: fieldNamePrefix + field.name, 
 									   floatingLabelText: field.label,
 									   labelPosition: 'right' }, 
 									 _.omit(dt.reactMuiSpec, ['elementType']), 
@@ -175,11 +178,11 @@ let plugin = function() {
 	}
 
 
-	function getBoolAsCheckbox(field, controlProps, muiTheme) {
+	function getBoolAsCheckbox(field, controlProps, muiTheme, fieldNamePrefix) {
 		let dt = field.type;
 		let dataTypeSpec = dt.reactMuiSpec;
 		let mergedProps = Object.assign(
-								{ name: field.name }, 
+								{ name: fieldNamePrefix + field.name }, 
 								_.omit(dataTypeSpec, ['elementType','labelProperty']),
 								controlProps,
 								{ label: field.label, style: { marginTop: '15px', marginBottom: '-20px', textAlign: 'left', display: 'block'} }
@@ -191,7 +194,7 @@ let plugin = function() {
 
 
 
-	function getBoolAsToggle(field, controlProps, muiTheme) {
+	function getBoolAsToggle(field, controlProps, muiTheme, fieldNamePrefix) {
 		let dt = field.type;
 
 		let mergedProps = Object.assign(_.omit(dt.reactMuiSpec, ['elementType', 'updateImmediately', 'labelProperty']), controlProps);
@@ -206,7 +209,7 @@ let plugin = function() {
 		return React.createElement(
 					FormsyToggle,
 					Object.assign(
-						 { name: field.name, 
+						 { name: fieldNamePrefix + field.name, 
 						   required: field.isRequired,
 						   label: field.label,
 						   labelStyle: { color: fade(muiTheme.textField.floatingLabelColor, 0.5) } }, 
@@ -217,35 +220,11 @@ let plugin = function() {
 	// Now, mix in functionality to OmniSchema...
 	OmniSchema.mixin({
 
-		onSchema: {
-			func: function getReactMUIFormComponent() {
+		onSchema: [
+
+			{   func: function getReactMUIFormComponent() {
 
 					let schema = this;
-
-					function getInputControls(controlProps, defaultValues, muiTheme) {
-						let children = [];
-
-						// eslint-disable-next-line
-						let fl = schema.getFieldList();
-						for (let fieldName of fl) {
-							let field = schema.getField(fieldName);
-							if ((field instanceof OmniSchema.OmniField) && !field.uiExclude) {
-								let mergedProps = Object.assign(
-										{ style: { display: 'block',
-												   textAlign: 'left',
-												   width: '100%'
-												 },
-										}, 
-										controlProps,
-										(typeof _.get(defaultValues, fieldName) !== 'undefined') ? { value: defaultValues[fieldName]} : undefined);
-								children.push(field.getReactMUIComponent(mergedProps, muiTheme));
-							}
-						}
-
-						// Finally, push a submit button...
-						children.push()
-						return children;
-					}
 
 					let formClass = React.createClass({
 							getInitialState: function() {
@@ -331,7 +310,7 @@ let plugin = function() {
 
 								]
 								.concat(
-									getInputControls(this.props.controlProps, this.props.defaultValues, this.context.muiTheme),
+									schema.getReactInputControls(this.props.controlProps, this.props.defaultValues, this.context.muiTheme, ''),
 									React.createElement('div', { style: { display: 'block', textAlign: 'right', marginTop: '25px' }},
 										this.props.cancelButtonName ?
 										    React.createElement(RaisedButton,  {type: 'button', 
@@ -355,26 +334,71 @@ let plugin = function() {
 
 					return formClass;
 
-			}
-		},
+				}
+			},
+
+			{	func: function getReactInputControls(controlProps, defaultValues, muiTheme, fieldNamePrefix) {
+
+					let schema = this;
+					let children = [];
+
+					// eslint-disable-next-line
+					let fl = schema.getFieldList();
+					for (let fieldName of fl) {
+						let field = schema.getField(fieldName);
+						if ((field instanceof OmniSchema.OmniField) && !field.uiExclude) {
+							let mergedProps = Object.assign(
+									{ style: { display: 'block',
+											   textAlign: 'left',
+											   width: '100%'
+											 },
+									}, 
+									controlProps,
+									(typeof _.get(defaultValues, fieldName) !== 'undefined') ? { value: defaultValues[fieldName]} : undefined);
+							children.push(field.getReactMUIComponent(mergedProps, muiTheme, fieldNamePrefix));
+						}
+					}
+
+					// Finally, push a submit button...
+					children.push()
+					return children;
+				}
+			},
+
+		],
 
 		onField: {
-			func: function getReactMUIComponent(controlProps, muiTheme) {
-				if (!this.type.getReactMUIComponent) {
+			func: function getReactMUIComponent(controlProps, muiTheme, fieldNamePrefix) {
+				if (this.type instanceof OmniSchema) {
+					// Handle references to other schemas...
+					let defaultValues = controlProps.value;
+					return React.createElement(Card, Object.assign({ expanded: true }, controlProps),
+											  React.createElement(CardHeader, {
+											    title: this.label,
+											    actAsExpander: false,
+											    showExpandableButton: false,
+											  }),
+											  React.createElement(
+											    CardText,
+											    null,
+											    this.type.getReactInputControls(controlProps, defaultValues, muiTheme, fieldNamePrefix + this.name + ".")
+											  ));
+				}
+				else if (!this.type.getReactMUIComponent) {
 					throw new Error('getReactMUIComponent has not been defined for datatype ' + this.type.name);
 				}
-				return this.type.getReactMUIComponent(this, controlProps, muiTheme);
+				return this.type.getReactMUIComponent(this, controlProps, muiTheme, fieldNamePrefix);
 			}
 		},
 
 		onType: [
 			{	matches: ['reactMuiSpec.elementType', 'reactMuiSpec.labelProperty' ],
 
-				func: function getReactMUIComponent(field, controlProps, muiTheme) {
+				func: function getReactMUIComponent(field, controlProps, muiTheme, fieldNamePrefix) {
 					let dataTypeSpec = this.reactMuiSpec;
 					let component = getFormsyControl(dataTypeSpec.elementType);
 					let mergedProps = Object.assign(
-											{ name: field.name }, 
+											{ name: fieldNamePrefix + field.name }, 
 											_.omit(dataTypeSpec, ['elementType','labelProperty']),
 											controlProps,
 											{ [dataTypeSpec.labelProperty] : field.label}
@@ -391,7 +415,7 @@ let plugin = function() {
 				                ]
 				         },
 
-				func: function getReactMUIComponent(field, controlProps, muiTheme) {
+				func: function getReactMUIComponent(field, controlProps, muiTheme, fieldNamePrefix) {
 					let dataTypeSpec = this.reactMuiSpec;
 					let component = getFormsyControl(dataTypeSpec.elementType);
 
@@ -402,7 +426,7 @@ let plugin = function() {
 						controlProps.value = value.clone().toDate();
 					}
 					let mergedProps = Object.assign(
-											{ name: field.name }, 
+											{ name: fieldNamePrefix + field.name }, 
 											_.omit(dataTypeSpec, ['elementType','labelProperty']),
 											controlProps,
 											{ [dataTypeSpec.labelProperty] : field.label}
@@ -416,27 +440,27 @@ let plugin = function() {
 
 			{	matches: 'enumValues', 
 
-				func: function getReactMUIComponent(field, controlProps, muiTheme) {
+				func: function getReactMUIComponent(field, controlProps, muiTheme, fieldNamePrefix) {
 
 					let presentation = _.get(field, 'ui.presentation');
 					if (presentation) {
 						// User has explicitly requested a presentation for this enumeration...
 						switch (presentation) {
 							case 'select':
-								return getEnumAsSelect(field, controlProps, muiTheme);
+								return getEnumAsSelect(field, controlProps, muiTheme, fieldNamePrefix);
 
 							case 'radio':
-								return getEnumAsRadio(field, controlProps, muiTheme);
+								return getEnumAsRadio(field, controlProps, muiTheme, fieldNamePrefix);
 
 							case 'toggle':
 								if (field.type.jsType === 'boolean') {
-									return getBoolAsToggle(field, controlProps, muiTheme);
+									return getBoolAsToggle(field, controlProps, muiTheme, fieldNamePrefix);
 								}
 								break;
 
 							case 'checkbox':
 								if (field.type.jsType === 'boolean') {
-									return getBoolAsCheckbox(field, controlProps, muiTheme);
+									return getBoolAsCheckbox(field, controlProps, muiTheme, fieldNamePrefix);
 								}
 								break;
 
@@ -447,10 +471,10 @@ let plugin = function() {
 
 					// Return default presentations...
 					if (field.type.name === 'OnOff') {
-						return getBoolAsToggle(field, controlProps, muiTheme);
+						return getBoolAsToggle(field, controlProps, muiTheme, fieldNamePrefix);
 					}
 					else {
-						return getEnumAsSelect(field, controlProps, muiTheme);
+						return getEnumAsSelect(field, controlProps, muiTheme, fieldNamePrefix);
 					}
 				}
 			},
@@ -459,10 +483,10 @@ let plugin = function() {
 			// it has a "fromString" method so its value can be marshalled back and forth...
 			{	matches: [ {$not: 'getReactMUIComponent'}, 'fromString' ],
 
-				func: function getReactMUIComponent(field, controlProps, muiTheme) {
+				func: function getReactMUIComponent(field, controlProps, muiTheme, fieldNamePrefix) {
 					let dataTypeSpec = this.reactMuiSpec;
 					let mergedProps = Object.assign(
-											{ name: field.name }, 
+											{ name: fieldNamePrefix + field.name }, 
 											_.omit(dataTypeSpec, ['elementType','labelProperty']),
 											controlProps,
 											{ [dataTypeSpec.labelProperty] : field.label}
