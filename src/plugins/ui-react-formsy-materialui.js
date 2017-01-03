@@ -378,11 +378,11 @@ let plugin = function() {
 											    actAsExpander: false,
 											    showExpandableButton: false,
 											  }),
-											  React.createElement(
-											    CardText,
-											    null,
-											    this.type.getReactInputControls(controlProps, defaultValues, muiTheme, fieldNamePrefix + this.name + ".")
-											  ));
+
+											React.createElement.apply(undefined, 
+												[ CardText, {} ]
+												.concat(this.type.getReactInputControls(controlProps, defaultValues, muiTheme, fieldNamePrefix + this.name + "."))
+											));
 				}
 				else if (!this.type.getReactMUIComponent) {
 					throw new Error('getReactMUIComponent has not been defined for datatype ' + this.type.name);
