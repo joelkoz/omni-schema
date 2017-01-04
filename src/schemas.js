@@ -340,11 +340,21 @@ class OmniSchema {
 						result[fieldName] = array;
 					}
 					else {
-						result[fieldName] = fieldDef.type.sanitize(fieldVal, uiOnly);
+						if (fieldDef.isArray && !Array.isArray(fieldVal)) {
+							result[fieldName] = [fieldDef.type.sanitize(fieldVal, uiOnly)];
+						}
+						else {
+							result[fieldName] = fieldDef.type.sanitize(fieldVal, uiOnly);
+						}
 					}
 				}
 				else {
-					result[fieldName] = fieldVal;
+					if (fieldDef.isArray && !Array.isArray(fieldVal)) {
+						result[fieldName] = [fieldVal];
+					}
+					else {
+						result[fieldName] = fieldVal;
+					}
 				}
 			}
 		} // for
