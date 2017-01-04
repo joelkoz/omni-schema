@@ -362,7 +362,7 @@ let plugin = function() {
 				if (this.type instanceof OmniSchema) {
 					// Handle references to other schemas...
 					let defaultValues = controlProps.value;
-					return React.createElement(Card, Object.assign({ expanded: true }, controlProps),
+					return React.createElement(Card, _.set(Object.assign({ expanded: true }, controlProps), "style.marginTop", "25px"),
 											  React.createElement(CardHeader, {
 											    title: this.label,
 											    actAsExpander: false,
