@@ -178,10 +178,20 @@ let plugin = function() {
 			func: function getCamoField() {
 				if (this.type instanceof OmniSchema) {
 					if (this.persistence === 'embed') {
-						return this.type.getEmbeddedCamoClass();
+						if (this.isArray) {
+							return [this.type.getEmbeddedCamoClass()];
+						}
+						else {
+							return this.type.getEmbeddedCamoClass();
+						}
 					}
 					else {
-						return this.type.getCamoClass();
+						if (this.isArray) {
+							return [this.type.getCamoClass()];
+						}
+						else {
+							return this.type.getCamoClass();
+						}
 					}
 				}
 				else if (!this.type.getCamoField) {
