@@ -378,18 +378,18 @@ class OmniSchema {
 				}
 				else if (!field.isArray) {
 					// Process a single value...
-					model[fieldName] = this.convertValue(modelVal, field);
+					model[fieldName] = this.convertValue(modelVal, field, sanitize);
 				}
 				else {
 					// Process an array of values...
 					if (Array.isArray(modelVal)) {
 						model[fieldName] = [];
 						modelVal.forEach(function (entry) {
-							model[fieldName].push(this.convertValue(entry, field));
+							model[fieldName].push(this.convertValue(entry, field, sanitize));
 						}.bind(this));
 					}
 					else if (!sanitize) {
-						model[fieldName] = [this.convertValue(modelVal, field)]
+						model[fieldName] = [this.convertValue(modelVal, field, sanitize)]
 					}
 				}
 			}
@@ -402,10 +402,13 @@ class OmniSchema {
 	}
 
 
-	convertValue(modelVal, field) {
+	convertValue(modelVal, field, sanitize) {
 
-		if (modelVal !== null) {
-			if (typeof modelVal !== field.type.jsType &&
+		if (modelVal !== null && modelVal !== undefined) {
+			if (field.type instanceof OmniSchema) {
+				return field.type.convert(modelVal, sanitize);
+			}
+			else if (typeof modelVal !== field.type.jsType &&
 				typeof field.type.fromString === 'function') {
 				return field.type.fromString(modelVal.toString());
 			}

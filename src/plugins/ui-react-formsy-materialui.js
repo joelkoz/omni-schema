@@ -274,17 +274,7 @@ let plugin = function() {
 							onValidSubmit(model, resetForm, invalidateForm) {
 								// Convert fields to their appropriate data type...
 								// eslint-disable-next-line
-								for (let fieldName in model) {
-									let field = schema[fieldName];
-									if (field instanceof OmniSchema.OmniField) {
-										let modelVal = model[fieldName];
-										if (typeof modelVal === 'string' &&
-											typeof field.type.fromString === 'function') {
-											model[fieldName] = field.type.fromString(modelVal);
-										}
-									}
-								} // for
-
+								model = schema.convert(model);
 								this.props.onSubmit(model, resetForm, invalidateForm);
 							},
 
