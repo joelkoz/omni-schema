@@ -86,7 +86,9 @@ let plugin = function() {
 					}
 				}
 
-				OmniSchema.camo.schemas[this.collectionName] = camoSchemaDef;
+				if (this.collectionName) {
+					OmniSchema.camo.schemas[this.collectionName] = camoSchemaDef;
+				}
 
 				return camoSchemaDef;
 
