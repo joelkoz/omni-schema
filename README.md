@@ -219,9 +219,15 @@ All of the above allow you to specify a 'name' of a new data type, or a pre-exis
 Schema field properties
 -------------------------
 
-The following properties are defined as "universal" properties that can be used by one or more
-plugins.  You are free to create your own of course if writing your own plugins, but if possible,
-using one of the below will make your plugin more useful to pre existing schema definitions:
+The following properties are defined as "universal" field properties that can be used when you are creating 
+a field definition in your schema specifications.  They are "universal" in that they frequently hold a common conceptual 
+value that can be used by one or more of the plugins. The best example is the "required" field property, which has 
+the same meaning to UIs, validators, and databases alike.  Properties that are specific to a particular category of plugin are also listed here.  For example `db.unique` is used to specify if the field contains
+a unique value when stored in a database.  Since OmniSchema ships with two different database plugins (Mongoose and Camo), it still makes since to use a "universal" property such as `db.unqiue` vs. `mongoose.unique`
+
+If you are creating your own plugins, you are of course free to create your own custom field properties to
+be used in schema definitions.  However, if applicable,
+using one of the "universal" properties below will make your custom plugin more useful to pre existing schema definitions:
 
 | Property | Possible values | Notes |
 | -------- | --------------- | ----- |
