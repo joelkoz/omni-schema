@@ -7,11 +7,6 @@ mongoose.Promise = global.Promise;
 OmniMongoose.plugin();
 
 
-mongoose.connect('mongodb://localhost/mongoose-example', { promiseLibrary: global.Promise });
-mongoose.connection.on('error', function(error) {
-	console.log(`Mongoose connection error: ${error}`);
-});
-
 let customerId;
 
 // Create test data using straight mongoosejs code (and no OmniSchema plugin code)
@@ -121,7 +116,6 @@ let testOmniPlugin = function() {
 	                  	  }, 'Customer', PersonSchema);
 
 
-	const Transaction = TransactionSchema.getMongooseModel();
 	const Customer = CustomerSchema.getMongooseModel();
 
 	let customer = new Customer({
@@ -138,6 +132,7 @@ let testOmniPlugin = function() {
 	return customer.save()
 
 	.then((cust) => {
+			const Transaction = TransactionSchema.getMongooseModel();
 			customerId = cust._id;
 			let now = new Date();
 			return Transaction.insertMany([ { customer: cust, date: now, item: 'ITEM001', amount: 101.01 },
@@ -165,7 +160,15 @@ let testOmniPlugin = function() {
 }
 
 
-testOmniPlugin()
+// mongoose.connection.on('error', function(error) {
+// 	console.log(`Mongoose connection error: ${error}`);
+// });
+
+mongoose.connect('mongodb://localhost/mongoose-example', { promiseLibrary: global.Promise })
+
+.then(() => {
+	return testOmniPlugin();
+})
 
 .then(() => {
 		console.log("disconnecting...");

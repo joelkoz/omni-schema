@@ -303,19 +303,6 @@ the actual compiled schema definition such as is done with the `Customer.transac
 because OmniSchema and its plugins keep track of compiled schemas and models internally, provided you specify a
 collection name when you compile the schema.
 
-Note that this auto-definition is not purely automatic. The plugins, for example, do not automatically make a call and request framework specific schemas and models just because you have an OmniSchema definition for one.  For example, when using the MongooseJS plugin, if you are requesting models, you will have to do this for the above:
-
-```javascript
-
-  const Transaction = TransactionSchema.getMongooseModel();
-  const Customer = CustomerSchema.getMongooseModel();
-
-```
-
-...even if you only need to use the `Customer` model in your code.  It is the call to getMongooseModel() that causes the
-plugin to save a copy of the model in mongoose format, and since a mongoose `Customer` model needs the mongoose `Transaction` model, it is
-important that the `Transaction` model be requested and cached at least once prior to requesting the `Customer` model.
-
 
 Optimizing references using foreign keys
 ----------------------------------------
