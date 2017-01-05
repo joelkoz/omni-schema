@@ -123,11 +123,9 @@ let plugin = function() {
 				}
 			},
 
-			{	func: function getMongooseModel(className) {
+			{	func: function getMongooseModel() {
 
-					if (className === undefined) {
-						className = this.collectionName;
-					}
+					let className = this.collectionName;
 
 					if (className && OmniSchema.mongoose.models[className]) {
 						return OmniSchema.mongoose.models[className];
