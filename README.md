@@ -227,7 +227,7 @@ The following properties are defined as "universal" field properties that can be
 a field definition in your schema specifications.  They are "universal" in that they frequently hold a common conceptual 
 value that can be used by one or more of the plugins. The best example is the "required" field property, which has 
 the same meaning to UIs, validators, and databases alike.  Properties that are specific to a particular category of plugin are also listed here.  For example `db.unique` is used to specify if the field contains
-a unique value when stored in a database.  Since OmniSchema ships with two different database plugins (Mongoose and Camo), it still makes since to use a "universal" property such as `db.unqiue` vs. `mongoose.unique`
+a unique value when stored in a database.  Since OmniSchema ships with two different database plugins (Mongoose and Camo), it still makes sence to use a "universal" property such as `db.unqiue` vs. `mongoose.unique`
 
 If you are creating your own plugins, you are of course free to create your own custom field properties to
 be used in schema definitions.  However, if applicable,
@@ -240,7 +240,7 @@ using one of the "universal" properties below will make your custom plugin more 
 | label | any string | If not specified, a label will be formulated from the field name
 | required | boolean | A shortcut property for `validation.required`
 | db.unique | boolean | If true, this field should be considered 'unique' in any collection of these entries. Primary used in databases.
-| db.persistence | string | Used in conjunction with fields that are other schemas, this property specifies how the field should be stored in a database.  The value 'embed' specifies that it should be a sub-document of the containing document. 'reference' (the default) indicates the value should be stored in a separate collection and be simply referenced by the containing document using its id. |
+| db.persistence | string | Used in conjunction with fields that are other schemas, this property specifies how the field should be stored in a database.  The value `'embed'` specifies that it should be a sub-document of the containing document. The value `'reference'` (the default) indicates the value should be stored in a separate collection and be simply referenced by the containing document using its id. |
 | db.foreignKeyField | string | Used in conjunction with fields that are other schemas, this is an optimization used by the Mongoose plugin to specify that the defining field should be derived by using the reference stored in the other schema (see `Referencing Other Schemas` below).
 | ui.exclude | boolean | If true, this field will be excluded from any generated user interfaces and UI validations
 | ui.presentation | 'select', radio', 'toggle', 'checkbox' | For enumerations, a way to specify the UI presentation if you do not like the default value.  'toggle' and 'checkbox' are only valid for enumerations that are also boolean values
@@ -254,8 +254,7 @@ Referencing Other Schemas
 -------------------------
 
 OmniSchema supports the ability for a field in a schema to have a data type that is actually another schema. This
-allows the database plugins to do the equivalent of *relational joins*.  The simplest way to specify this relationship
-is to use one schema as the "type" field of another, like this:
+allows you to describe objects that have properties that are other objects, and/or describe to the database plugins that you want to store and retrieve the data doing the equivalent of a *relational join*.  The simplest way to specify this relationship is to use one schema as the "type" field of another, like this:
 
 ```javascript
 
@@ -286,8 +285,8 @@ Sometimes you have one schema that references another, which in turn references 
 problem when defining your schemas, as there is no way to supply a compiled schema value to each schema, since they
 depend on the other already being compiled.
 
-OmniSchema supports an alternative schema specification that allows you to specify the other schema as a string using its
-collection name. To use this alternative specification, define your field type NOT with the `type` property, but instead 
+OmniSchema supports an alternative field definition for schema types that allows you to specify the other schema as a string by using its
+collection name. To use this alternative specification, define your field NOT with the `type` property, but instead 
 use the `schema` property, like this:
 
 
@@ -298,7 +297,7 @@ use the `schema` property, like this:
                              item: { type: 'String' }, 
                              amount: { type: 'Currency' },
                              customer: { schema: 'Customer' }
-                           }, 'Transactions');
+                           }, 'Transaction');
 
   const CustomerSchema = OmniSchema.compile({
                             accountNumber: { type: 'String' },
@@ -312,15 +311,15 @@ use the `schema` property, like this:
 Notice that the `Transaction.customer` field's reference to the `Customer` schema is done via a string instead of using
 the actual compiled schema definition such as is done with the `Customer.transactions` field.  This mechanism works
 because OmniSchema and its plugins keep track of compiled schemas and models internally, provided you specify a
-collection name when you compile the schema.
+collection name as the second paramter to `compile()` when you define the schema.
 
 
 Optimizing references using foreign keys
 ----------------------------------------
 
 There is actually a potential problem with the above `Transaction` and `Customer` schema definitions. As currently
-specified, `Customer.transactions` is an array that you need to populate each time you create a `Transaction`.  That is because, as defined, the transactions are stored as an array of transaction ids in the Customer document.  Not only is
-this time consuming and error prone, unbounded arrays is a MongoDB anti-pattern.  The last thing you want is an array for 10,000 ids if a customer has 10,000 separate transactions.
+specified, `Customer.transactions` is an array in the Customer document and that you need to populate each time you create a new `Transaction`.  That is because, as defined, the transactions are stored as an array of transaction ids and saved as part of the Customer document.  Not only is
+this time consuming and error prone, unbounded arrays is a MongoDB anti-pattern. The last thing you want is to store an array for 10,000 ids if a customer has 10,000 separate transactions.
 
 Mongoose solves this problem with a feature called "virtual fields." A virtual field is a way to specify data that is not really stored directly in the document, but it is instead computed from other data in the data store.  In this example, what we want to do is specify that the `Customer.transactions` array actually be populated by a second *join* type query on the `Transactions` collection.  One simple addition to our OmniSchema definition takes care of this:
 
@@ -335,8 +334,8 @@ Mongoose solves this problem with a feature called "virtual fields." A virtual f
 
 ```
 
-The `db.foreignKeyField` property above specifies that the `transactions` field can be computed by matching the
-object id of the current schema (i.e. the `Customer` collection) to the `customer` field in the `Transaction` collection.
+The `db.foreignKeyField` property above specifies that the `transactions` field is to be computed by matching the
+object id of the current schema (i.e. the `Customer` collection) to the `customer` field in the `Transaction` collection. Foreign key fields such as this do not need to be stored in the database (at least, not as part of the Customer table).  If you add a new transaction, that transaction will be automatically included in the array the next time you retrieve the Customer record without the need for you to manually add the transaction to the customer's transaction array.
 
 Note that this feature is currently only supported by the mongoose plugin.  Camo does not have such a feature at this time. Also note that for Mongoose models, these virtual fields are not automatically populated. You must explicitly request they be populated by calling the `populate()` method like this:
 
