@@ -31,7 +31,7 @@ const AddressSchema = OmniSchema.compile({
 }, 'Address');
 
 
-// ContactSchema is a collection named "Contacts" that inherits properties from the PersonSchema
+// ContactSchema is a collection named "Contacts" that inherits/extends the properties of PersonSchema
 const ContactSchema = OmniSchema.compile({
                       		phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
                       		email: { type: 'Email', db: { unique: true} },
@@ -56,8 +56,6 @@ connect(uri).then(() => {
 
     // Create a Camo document to store our data...
     let Contact = ContactSchema.getCamoClass();
-    let Address = AddressSchema.getEmbeddedCamoClass();
-
 
     // Next, generate some mock data with the Faker plugin...
     let mockRecord = ContactSchema.getMockData();

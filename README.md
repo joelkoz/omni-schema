@@ -36,11 +36,11 @@ Usage
 ------------
 
 ```javascript
-const OmniSchema = require('omni-schema');
-const OmniHtml5 = require('omni-schema/lib/plugins/ui-html5');
-const OmniJoi = require('omni-schema/lib/plugins/validation-joi');
-const OmniFaker = require('omni-schema/lib/plugins/mock-faker');
-const OmniCamo = require('omni-schema/lib/plugins/db-camo');
+const OmniSchema = require('../index');
+const OmniHtml5 = require('../plugins/ui-html5');
+const OmniJoi = require('../plugins/validation-joi');
+const OmniFaker = require('../plugins/mock-faker');
+const OmniCamo = require('../plugins/db-camo');
 
 const connect = require('camo').connect;
 
@@ -51,18 +51,34 @@ OmniCamo.plugin();
 
 const Types = OmniSchema.Types;
 
-const ContactSchema = OmniSchema.compile({
+// Defining a schema with a collection name of "People"...
+const PersonSchema = OmniSchema.compile({
                           firstName: Types.FirstName, // The simplest way to declare a field
                           lastName: { type: 'LastName', required: true }, // If you need to vary from the defaults
                           sex: {type: 'Sex', ui: { presentation: 'radio' } }, // Adding a hint to one of the plugins
-                          phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
-                          email: { type: 'Email' },
                           birthdate: { type: 'Date' },
+                      }, 'People');
+
+
+// Defining a schema of a single address.  We will embed this in the ContactSchema below
+const AddressSchema = OmniSchema.compile({
+   street: { type: 'StreetAddress' },
+   city: { type: 'City' },
+   state: { type: 'State' },
+   zip: { type: 'PostalCode' }
+}, 'Address');
+
+
+// ContactSchema is a collection named "Contacts" that inherits properties from the PersonSchema
+const ContactSchema = OmniSchema.compile({
+                          phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
+                          email: { type: 'Email', db: { unique: true} },
+                          addresses: [{ type: AddressSchema, db: { persistence: 'embed'} }], // How to reference another schema
                           favorite: { type: 'YesNo', label: 'Add this person to your favorites?' },
-                          balance: { type: 'Currency', default: 123.45},
-                          age: { type: 'Integer', validation: { min: 0 }},
+                          balance: { type: 'Currency', default: 123.45 },
+                          age: { type: 'Integer', validation: { min: 13, max: 110 }},
                           ownerId: { type: 'Integer', ui: { exclude: true }}, // Internal field - no user editing
-                      });
+                      }, 'Contacts', PersonSchema); 
 
 console.log(`The fields in our schema are ${JSON.stringify(ContactSchema.getFieldList())}`);
 
@@ -70,23 +86,26 @@ console.log(`\nThe fields to be displayed in the UI are ${JSON.stringify(Contact
 
 console.log(`\nA new blank default record for editing looks like this:\n${JSON.stringify(ContactSchema.getDefaultRecord(true))}\n`);
 
+
 // First, connect to database
 // let uri = 'mongodb://localhost:27017/OmniSchemaExample'; // save to a MongoDB database
 let uri = 'nedb://memory'; // save to an in memory NeDB database
 connect(uri).then(() => {
 
     // Create a Camo document to store our data...
-    let Contact = ContactSchema.getCamoClass('contacts');
+    let Contact = ContactSchema.getCamoClass();
+    let Address = AddressSchema.getEmbeddedCamoClass();
 
 
     // Next, generate some mock data with the Faker plugin...
     let mockRecord = ContactSchema.getMockData();
-    console.log('\n\nMock record values:');
+    console.log('\nMock record values:');
     console.log(JSON.stringify(mockRecord));
 
 
     // Save it to our database...
     console.log('\n\nSaving record to database...');
+
     let dbRecord = Contact.create(mockRecord);
     dbRecord.save().then(() => {
         console.log('\n\nDatabase record values:');
@@ -104,7 +123,7 @@ connect(uri).then(() => {
 
 
         // Now, see if it is valid using the Joi validator plugin...
-        console.log('\n\nNow validating record...');
+        console.log('\n\nValidating the db record with a UI validator...');
 
 
         // Pass TRUE to getValidator() to indicate we want a validator
@@ -126,6 +145,7 @@ connect(uri).then(() => {
         // Now, lets try to validate the sanitized UI record instead.
         // Also - let's use the alternative "try/catch" version of 
         // validation from the plugin...
+        console.log('Trying again with a UI record...');
         try {
             let validatedRecord = uiValidator.validate(uiRecord);
             console.log('Record validated correctly');
