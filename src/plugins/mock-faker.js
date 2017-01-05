@@ -101,8 +101,9 @@ let plugin = function() {
 
 				let omniSchema = this;
 				let mockData = {};
-				for (let fieldName in omniSchema) {
-					let field = omniSchema[fieldName];
+				let fl = this.getFieldList();
+				for (let fieldName of fl) {
+					let field = omniSchema.getField(fieldName);
 					if ((field instanceof OmniSchema.OmniField) && (!uiExclude || !field.uiExclude)) {
 						if (field.isArray) {
 							let mockArray = [];
@@ -114,7 +115,7 @@ let plugin = function() {
 						    mockData[fieldName] = mockArray;
 						}
 						else {
-						    mockData[fieldName] = field.getMockData();
+						    mockData[fieldName] = field.getMockData(uiExclude);
 						}
 					}
 				}
@@ -124,11 +125,16 @@ let plugin = function() {
 		],
 
 		onField: {
-			func: function getMockData() {
+			func: function getMockData(uiExclude) {
 				if (!this.type.getMockData) {
 					throw new Error('getMockData has not been defined for datatype ' + this.type.name);
 				}
-				return this.type.getMockData(this);
+				if (this.type instanceof OmniSchema) {
+					return this.type.getMockData(uiExclude)
+				}
+				else {
+					return this.type.getMockData(this);
+				}
 			}
 		},
 

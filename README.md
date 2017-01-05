@@ -36,11 +36,11 @@ Usage
 ------------
 
 ```javascript
-const OmniSchema = require('omni-schema');
-const OmniHtml5 = require('omni-schema/lib/plugins/ui-html5');
-const OmniJoi = require('omni-schema/lib/plugins/validation-joi');
-const OmniFaker = require('omni-schema/lib/plugins/mock-faker');
-const OmniCamo = require('omni-schema/lib/plugins/db-camo');
+const OmniSchema = require('../index');
+const OmniHtml5 = require('../plugins/ui-html5');
+const OmniJoi = require('../plugins/validation-joi');
+const OmniFaker = require('../plugins/mock-faker');
+const OmniCamo = require('../plugins/db-camo');
 
 const connect = require('camo').connect;
 
@@ -51,18 +51,34 @@ OmniCamo.plugin();
 
 const Types = OmniSchema.Types;
 
-const ContactSchema = OmniSchema.compile({
+// Defining a schema with a collection name of "People"...
+const PersonSchema = OmniSchema.compile({
                           firstName: Types.FirstName, // The simplest way to declare a field
                           lastName: { type: 'LastName', required: true }, // If you need to vary from the defaults
                           sex: {type: 'Sex', ui: { presentation: 'radio' } }, // Adding a hint to one of the plugins
-                          phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
-                          email: { type: 'Email' },
                           birthdate: { type: 'Date' },
+                      }, 'People');
+
+
+// Defining a schema of a single address.  We will embed this in the ContactSchema below
+const AddressSchema = OmniSchema.compile({
+   street: { type: 'StreetAddress' },
+   city: { type: 'City' },
+   state: { type: 'State' },
+   zip: { type: 'PostalCode' }
+}, 'Address');
+
+
+// ContactSchema is a collection named "Contacts" that inherits/extends the properties of PersonSchema
+const ContactSchema = OmniSchema.compile({
+                          phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
+                          email: { type: 'Email', db: { unique: true} },
+                          addresses: [{ type: AddressSchema, db: { persistence: 'embed'} }], // How to reference another schema
                           favorite: { type: 'YesNo', label: 'Add this person to your favorites?' },
-                          balance: { type: 'Currency', default: 123.45},
-                          age: { type: 'Integer', validation: { min: 0 }},
+                          balance: { type: 'Currency', default: 123.45 },
+                          age: { type: 'Integer', validation: { min: 13, max: 110 }},
                           ownerId: { type: 'Integer', ui: { exclude: true }}, // Internal field - no user editing
-                      });
+                      }, 'Contacts', PersonSchema); 
 
 console.log(`The fields in our schema are ${JSON.stringify(ContactSchema.getFieldList())}`);
 
@@ -70,23 +86,24 @@ console.log(`\nThe fields to be displayed in the UI are ${JSON.stringify(Contact
 
 console.log(`\nA new blank default record for editing looks like this:\n${JSON.stringify(ContactSchema.getDefaultRecord(true))}\n`);
 
+
 // First, connect to database
 // let uri = 'mongodb://localhost:27017/OmniSchemaExample'; // save to a MongoDB database
 let uri = 'nedb://memory'; // save to an in memory NeDB database
 connect(uri).then(() => {
 
     // Create a Camo document to store our data...
-    let Contact = ContactSchema.getCamoClass('contacts');
-
+    let Contact = ContactSchema.getCamoClass();
 
     // Next, generate some mock data with the Faker plugin...
     let mockRecord = ContactSchema.getMockData();
-    console.log('\n\nMock record values:');
+    console.log('\nMock record values:');
     console.log(JSON.stringify(mockRecord));
 
 
     // Save it to our database...
     console.log('\n\nSaving record to database...');
+
     let dbRecord = Contact.create(mockRecord);
     dbRecord.save().then(() => {
         console.log('\n\nDatabase record values:');
@@ -104,7 +121,7 @@ connect(uri).then(() => {
 
 
         // Now, see if it is valid using the Joi validator plugin...
-        console.log('\n\nNow validating record...');
+        console.log('\n\nValidating the db record with a UI validator...');
 
 
         // Pass TRUE to getValidator() to indicate we want a validator
@@ -126,6 +143,7 @@ connect(uri).then(() => {
         // Now, lets try to validate the sanitized UI record instead.
         // Also - let's use the alternative "try/catch" version of 
         // validation from the plugin...
+        console.log('Trying again with a UI record...');
         try {
             let validatedRecord = uiValidator.validate(uiRecord);
             console.log('Record validated correctly');
@@ -211,6 +229,8 @@ using one of the below will make your plugin more useful to pre existing schema 
 | label | any string | If not specified, a label will be formulated from the field name
 | required | boolean | A shortcut property for `validation.required`
 | db.unique | boolean | If true, this field should be considered 'unique' in any collection of these entries. Primary used in databases.
+| db.persistence | string | Used in conjunction with fields that are other schemas, this property specifies how the field should be stored in a database.  The value 'embed' specifies that it should be a sub-document of the containing document. 'reference' (the default) indicates the value should be stored in a separate collection and be simply referenced by the containing document using its id. |
+| db.foreignKeyField | string | Used in conjunction with fields that are other schemas, this is an optimization used by the Mongoose plugin to specify that the defining field should be derived by using the reference stored in the other schema (see `Referencing Other Schemas` below).
 | ui.exclude | boolean | If true, this field will be excluded from any generated user interfaces and UI validations
 | ui.presentation | 'select', radio', 'toggle', 'checkbox' | For enumerations, a way to specify the UI presentation if you do not like the default value.  'toggle' and 'checkbox' are only valid for enumerations that are also boolean values
 | validation.min | number | For numbers, the minimum allowed number.  For strings, the minimum allowed length
@@ -219,6 +239,117 @@ using one of the below will make your plugin more useful to pre existing schema 
 | default | a value or a function | If a function, it is called (with zero arguments) to compute a default value. Otherwise, the value is used as is.
 
 
+Referencing Other Schemas
+-------------------------
+
+OmniSchema supports the ability for a field in a schema to have a data type that is actually another schema. This
+allows the database plugins to do the equivalent of *relational joins*.  The simplest way to specify this relationship
+is to use one schema as the "type" field of another, like this:
+
+```javascript
+
+  const AddressSchema = OmniSchema.compile({
+     street: { type: 'StreetAddress' },
+     city: { type: 'City' },
+     state: { type: 'State' },
+     zip: { type: 'PostalCode' }
+  }, 'Address');
+
+
+  const PersonSchema = OmniSchema.compile({
+                            firstName: { type: 'FirstName' },
+                            lastName: { type: 'LastName', required: true },
+                            address: { type: AddressSchema, db: { persistence: 'embed'} }
+                        }, 'People');
+```
+
+In the above example, the "People" collection will have fields such as `firstName`, `lastName` as well as address fields 
+`address.street`, `address.state`, etc.  The `db.persistence = 'embed'` setting indicates to the database plugins that
+when storing the data, the `address` data should be stored directly inside the `People` collection as one single document. 
+
+
+Handling circular References to Other Schemas
+---------------------------------------------
+
+Sometimes you have one schema that references another, which in turn references the first schema. This presents a
+problem when defining your schemas, as there is no way to supply a compiled schema value to each schema, since they
+depend on the other already being compiled.
+
+OmniSchema supports an alternative schema specification that allows you to specify the other schema as a string using its
+collection name. To use this alternative specification, define your field type NOT with the `type` property, but instead 
+use the `schema` property, like this:
+
+
+```javascript
+
+  const TransactionSchema = OmniSchema.compile({  
+                             date: { type: 'Date' }, 
+                             item: { type: 'String' }, 
+                             amount: { type: 'Currency' },
+                             customer: { schema: 'Customer' }
+                           }, 'Transactions');
+
+  const CustomerSchema = OmniSchema.compile({
+                            accountNumber: { type: 'String' },
+                            orderCount: { type: 'String' },
+                            lastOrderDate: { type: 'String' },
+                            transactions: [ { type: TransactionSchema }],
+                        }, 'Customer');
+
+```
+
+Notice that the `Transaction.customer` field's reference to the `Customer` schema is done via a string instead of using
+the actual compiled schema definition such as is done with the `Customer.transactions` field.  This mechanism works
+because OmniSchema and its plugins keep track of compiled schemas and models internally, provided you specify a
+collection name when you compile the schema.
+
+Note that this auto-definition is not purely automatic. The plugins, for example, do not automatically make a call and request framework specific schemas and models just because you have an OmniSchema definition for one.  For example, when using the MongooseJS plugin, if you are requesting models, you will have to do this for the above:
+
+```javascript
+
+  const Transaction = TransactionSchema.getMongooseModel();
+  const Customer = CustomerSchema.getMongooseModel();
+
+```
+
+...even if you only need to use the `Customer` model in your code.  It is the call to getMongooseModel() that causes the
+plugin to save a copy of the model in mongoose format, and since a mongoose `Customer` model needs the mongoose `Transaction` model, it is
+important that the `Transaction` model be requested and cached at least once prior to requesting the `Customer` model.
+
+
+Optimizing references using foreign keys
+----------------------------------------
+
+There is actually a potential problem with the above `Transaction` and `Customer` schema definitions. As currently
+specified, `Customer.transactions` is an array that you need to populate each time you create a `Transaction`.  That is because, as defined, the transactions are stored as an array of transaction ids in the Customer document.  Not only is
+this time consuming and error prone, unbounded arrays is a MongoDB anti-pattern.  The last thing you want is an array for 10,000 ids if a customer has 10,000 separate transactions.
+
+Mongoose solves this problem with a feature called "virtual fields." A virtual field is a way to specify data that is not really stored directly in the document, but it is instead computed from other data in the data store.  In this example, what we want to do is specify that the `Customer.transactions` array actually be populated by a second *join* type query on the `Transactions` collection.  One simple addition to our OmniSchema definition takes care of this:
+
+
+```javascript
+
+  const CustomerSchema = OmniSchema.compile({
+     ...
+     transactions: [ { type: TransactionSchema, db: { foreignKeyField: 'customer' } }],
+     ...
+  }, 'Customer');    
+
+```
+
+The `db.foreignKeyField` property above specifies that the `transactions` field can be computed by matching the
+object id of the current schema (i.e. the `Customer` collection) to the `customer` field in the `Transaction` collection.
+
+Note that this feature is currently only supported by the mongoose plugin.  Camo does not have such a feature at this time. Also note that for Mongoose models, these virtual fields are not automatically populated. You must explicitly request they be populated by calling the `populate()` method like this:
+
+
+```javascript
+
+      let query = Customer.findOne({_id: customerId }).populate('transactions');
+      
+      query.exec().then( (result) => { console.log(JSON.stringify(result)) } );
+
+```
 
 
 Pre existing OmniSchema Plugins
@@ -269,15 +400,12 @@ Known Issues
 -------------------------------
 1. The UI plugins don't support editing array fields yet.
 
-2. None of the plugins support nested objects yet.
-
 
 Road Map
 ------------------------------
-1. Support embedded object data type
 
-2. Support array editing in UI
+1. Support array editing in UI
 
-3. Documentation for creating plugins
+2. Documentation for creating plugins
 
-4. Create unit tests for existing code
+3. Create unit tests for existing code

@@ -13,18 +13,34 @@ OmniCamo.plugin();
 
 const Types = OmniSchema.Types;
 
+// Defining a schema with a collection name of "People"...
+const PersonSchema = OmniSchema.compile({
+                          firstName: Types.FirstName, // The simplest way to declare a field
+                          lastName: { type: 'LastName', required: true }, // If you need to vary from the defaults
+                          sex: {type: 'Sex', ui: { presentation: 'radio' } }, // Adding a hint to one of the plugins
+                          birthdate: { type: 'Date' },
+                      }, 'People');
+
+
+// Defining a schema of a single address.  We will embed this in the ContactSchema below
+const AddressSchema = OmniSchema.compile({
+   street: { type: 'StreetAddress' },
+   city: { type: 'City' },
+   state: { type: 'State' },
+   zip: { type: 'PostalCode' }
+}, 'Address');
+
+
+// ContactSchema is a collection named "Contacts" that inherits/extends the properties of PersonSchema
 const ContactSchema = OmniSchema.compile({
-                     		  firstName: Types.FirstName, // The simplest way to declare a field
-                      		lastName: { type: 'LastName', required: true }, // If you need to vary from the defaults
-                      		sex: {type: 'Sex', ui: { presentation: 'radio' } }, // Adding a hint to one of the plugins
                       		phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
                       		email: { type: 'Email', db: { unique: true} },
-                      		birthdate: { type: 'Date' },
+                          addresses: [{ type: AddressSchema, db: { persistence: 'embed'} }], // How to reference another schema
                       		favorite: { type: 'YesNo', label: 'Add this person to your favorites?' },
                       		balance: { type: 'Currency', default: 123.45 },
                           age: { type: 'Integer', validation: { min: 13, max: 110 }},
                           ownerId: { type: 'Integer', ui: { exclude: true }}, // Internal field - no user editing
-                  	  });
+                  	  }, 'Contacts', PersonSchema); 
 
 console.log(`The fields in our schema are ${JSON.stringify(ContactSchema.getFieldList())}`);
 
@@ -39,8 +55,7 @@ let uri = 'nedb://memory'; // save to an in memory NeDB database
 connect(uri).then(() => {
 
     // Create a Camo document to store our data...
-    let Contact = ContactSchema.getCamoClass('contacts');
-
+    let Contact = ContactSchema.getCamoClass();
 
     // Next, generate some mock data with the Faker plugin...
     let mockRecord = ContactSchema.getMockData();
@@ -50,6 +65,7 @@ connect(uri).then(() => {
 
     // Save it to our database...
     console.log('\n\nSaving record to database...');
+
     let dbRecord = Contact.create(mockRecord);
     dbRecord.save().then(() => {
         console.log('\n\nDatabase record values:');

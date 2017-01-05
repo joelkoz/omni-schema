@@ -36,6 +36,38 @@ OmniSchema.joi.defineJoiType = function(name, joiType, props) {
 }
 
 
+function omitDeep(input, props) {
+
+  function omitDeepOnOwnProps(obj) {
+    if ((!_.isArray(obj) && !_.isObject(obj)) || obj instanceof Date) {
+      return obj;
+    }
+
+    if (_.isArray(obj)) {
+      return omitDeep(obj, props);
+    }
+
+    const o = {};
+    _.forOwn(obj, (value, key) => {
+      o[key] = omitDeep(value, props);
+    });
+
+    return _.omit(o, props);
+  }
+
+  if (typeof input === "undefined") {
+    return {};
+  }
+
+  if (_.isArray(input)) {
+    return input.map(omitDeepOnOwnProps);
+  }
+
+  return omitDeepOnOwnProps(input);
+
+};
+
+
 let plugin = function() {
 
 	const defineJoiType = OmniSchema.joi.defineJoiType;
@@ -63,11 +95,14 @@ let plugin = function() {
 
 				let omniSchema = this;
 				let joiSchemaDef = {};
-				for (let fieldName in omniSchema) {
-					let field = omniSchema[fieldName];
+				let fl = this.getFieldList();
+				for (let fieldName of fl) {
+					let field = omniSchema.getField(fieldName);
 					if ((field instanceof OmniSchema.OmniField) && (!uiExclude || !field.uiExclude)) {
-						let joiField = field.getJoiField();
-					    joiSchemaDef[fieldName] = joiField;
+						let joiField = field.getJoiField(uiExclude);
+						if (joiField) {
+					    	joiSchemaDef[fieldName] = joiField;
+					    }
 					}
 				}
 				return joiSchemaDef;
@@ -84,7 +119,8 @@ let plugin = function() {
 
 					validate: function validate(value, ignoreFields) {
 						this.lastError = undefined;
-						let result  = this.schema.validate(_.omit(value, ignoreFields));
+						let val2 = omitDeep(value, ignoreFields);
+						let result  = this.schema.validate(val2);
 						if (result.error === null) {
 							return result.value;
 						}
@@ -109,8 +145,17 @@ let plugin = function() {
 		],
 
 		onField: {
-			func: function getJoiField() {
-				if (!this.type.getJoiField) {
+			func: function getJoiField(uiExclude) {
+				if (this.type instanceof OmniSchema) {
+					// Handle references to other schemas...
+					if (this.isArray) {
+						return Joi.array().items(this.type.getJoiSchemaDef(uiExclude));
+					}
+					else {
+						return this.type.getJoiSchemaDef(uiExclude);
+					}
+				}
+				else if (!this.type.getJoiField) {
 					throw new Error('getJoiField has not been defined for datatype ' + this.type.name);
 				}
 				return this.type.getJoiField(this);

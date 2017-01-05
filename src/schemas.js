@@ -83,6 +83,16 @@ class OmniField {
 		return _.get(this, 'db.unique');
 	}
 
+	get persistence() {
+		return _.get(this, 'db.persistence');
+	}
+
+
+	get foreignKeyField() {
+		return _.get(this, 'db.foreignKeyField');
+	}
+
+
 	get defaultValue() {
 		if (this.isArray) {
 			return [];
@@ -102,8 +112,91 @@ class OmniField {
 }
 
 
+let SchemaCache = {};
+
+
+
+class OmniSchemaReference extends OmniField {
+
+	constructor(schema, name, referencedSchemaName, isArray, label) {
+		super(schema, name, null, isArray, label);
+		this._referencedSchemaName = referencedSchemaName;
+	}
+
+	get type() {
+		let schema = SchemaCache[this._referencedSchemaName];
+		if (!schema) {
+			throw new Error(`Unable to locate a compiled schema named ${this._referencedSchemaName}`);
+		}
+		return schema;
+	}
+
+}
+
+
 
 class OmniSchema {
+
+	constructor(collectionName, parentSchema) {
+
+		if (collectionName) {
+
+			if (SchemaCache[collectionName]) {
+				throw new Error(`An OmniSchema collection named ${collectionName} has already been defined. Collection names must be unqiue.`);
+			}
+
+			Object.defineProperty(this, '__collectionName', { enumerable: false, value: collectionName, writeable: true, configurable: true });
+
+			SchemaCache[collectionName] = this;
+		}
+
+
+		if (parentSchema) {
+			Object.defineProperty(this, '__parentSchema', { enumerable: false, value: parentSchema, writeable: true, configurable: true });
+			parentSchema.hasChildren = true;
+		}
+
+	}
+
+
+	get collectionName() {
+		return this.__collectionName;
+	}
+
+
+	get parentSchema() {
+		return this.__parentSchema;
+	}
+
+
+	get isSubClass() {
+		return this.hasOwnProperty('__parentSchema');
+	}
+
+
+	get hasChildren() {
+		return this.__hasChildren;
+	}
+
+
+	set hasChildren(isAParent) {
+		if (!this.hasOwnProperty('__hasChildren')) {
+			Object.defineProperty(this, '__hasChildren', { enumerable: false, value: isAParent, writeable: true, configurable: true });
+		}
+		else {
+			this.__hasChildren = isAParent;
+		}
+	}
+
+
+	get rootSchema() {
+		if (this.parentSchema) {
+			return this.parentSchema.rootSchema;
+		}
+		else {
+			return this;
+		}
+	}
 
 
 	static get Types() {
@@ -114,7 +207,12 @@ class OmniSchema {
 	 * An OmniSchema factory method that compiles a schema template and returns
 	 * an OmniSchema definition.
 	 * @param templateObj {object} The schema descriptor to translate into
-	 * an OmniSchema instance. Here is an example template:
+	 * an OmniSchema instance. 
+	 * @param collectionName {String} The name of a collection that holds this schema (optional).
+	 * Primarily for use by persistence plugins
+	 * @param parentSchema {OmniSchema} For object inheritance if this schema inherits field
+	 * definitions from another schema (optional)
+	 * Here is an example template:
 	 * <code>
 	 *	{	firstName: { type: 'FirstName', required: true },
 	 *		lastName: { type: OmniTypes.LastName }, 
@@ -125,9 +223,9 @@ class OmniSchema {
 	 *	}
 	 *</code>
 	 */
-    static compile(templateObj) {
+    static compile(templateObj, collectionName, parentSchema) {
 
-		let schema = new OmniSchema();
+		let schema = new OmniSchema(collectionName, parentSchema);
 
 		// eslint-disable-next-line
 		for (let fieldName in templateObj) {
@@ -142,18 +240,28 @@ class OmniSchema {
 				isArray = false;
 			}
 
-			let omniType, required, label, otherProps;
+			let omniType, required, label, otherProps, schemaRef;
 
-			if (prop instanceof OmniTypes.DataType) {
+			if (prop instanceof OmniTypes.DataType || prop instanceof OmniSchema) {
 				omniType = prop;
 				otherProps = {};
 			}
 			else {
 				let type = prop.type;
+				schemaRef = prop.schema;
 				label = prop.label;
 
-				if (type instanceof OmniTypes.DataType) {
+				if (type instanceof OmniTypes.DataType || type instanceof OmniSchema) {
 					omniType = type;
+				}
+				else if (schemaRef) {
+					if (schemaRef instanceof OmniSchema) {
+						omniType = schemaRef;
+						schemaRef = null;
+					}
+					else if (typeof(schemaRef) !== 'string') {
+						throw new Error(`'schema' property on field ${fieldName} must be a string or an OmniSchema instance.`);
+					}
 				}
 				else {
 				    omniType = OmniTypes[type];
@@ -161,11 +269,18 @@ class OmniSchema {
 						throw new Error('Could not locate omniType named ' + type);
 					}
 				}
-				otherProps = _.omit(prop, ['type', 'label']);
+
+				otherProps = _.omit(prop, ['type', 'label', 'schema']);
 			}
 
 			// Create the field definition...
-			let omniField = new OmniField(schema, fieldName, omniType, isArray, label);
+			let omniField;
+			if (schemaRef) {
+				omniField = new OmniSchemaReference(schema, fieldName, schemaRef, isArray, label);
+			}
+			else {
+				omniField = new OmniField(schema, fieldName, omniType, isArray, label);
+			}
 
 			// Merge in any other properties not already compiled...
 			Object.assign(omniField, otherProps);
@@ -179,14 +294,31 @@ class OmniSchema {
 
 
 	/**
+	* Returns the OmniField object for the specified field name, or undefined if
+	* the field does not exist. If this schema is a subClass, parent schemas are
+	* also checked for the field name if it can not be found in the current schema.
+	*/
+	getField(fieldName) {
+		let field = this[fieldName];
+		if (!field) {
+			if (this.parentSchema) {
+				field = this.parentSchema.getField(fieldName);
+			}
+		}
+		return field;
+	}
+
+
+	/**
 	 * Calls the callBack function for each field definition in the schema, passing
 	 * the OmniField definition as the sole parameter.  If uiOnly is TRUE,
 	 * the callback will only be called for fields that are marked as part of the UI
 	 * (i.e. do NOT have the ui.exclude property set to true).
 	 */
-	forEachField(callBack, uiOnly) {
-		for (let fieldName in this) {
-			let field = this[fieldName];
+	forEachField(callBack, uiOnly, excludeInherited) {
+		let fl = this.getFieldList(uiOnly, excludeInherited);
+		for (let fieldName of fl) {
+			let field = this.getField(fieldName);
 			if ((field instanceof OmniSchema.OmniField) && (!uiOnly || !field.uiExclude)) {
 				callBack(field);
 			}
@@ -201,7 +333,7 @@ class OmniSchema {
 	 * that are not excluded from the user interface with the 'ui.exclude'
 	 * property.
 	 */
-	getFieldList(uiOnly) {
+	getFieldList(uiOnly, excludeInherited) {
 
 		let propName;
 		if (uiOnly) {
@@ -214,7 +346,17 @@ class OmniSchema {
 		// Return a memoirized list
 		if (!this[propName]) {
 			let uiKeys = [];
-			this.forEachField(function (field) { uiKeys.push(field.name); }, uiOnly);
+			if (!excludeInherited && this.isSubClass) {
+				uiKeys = uiKeys.concat(this.parentSchema.getFieldList(uiOnly));
+			}
+
+			for (let fieldName in this) {
+				let field = this[fieldName];
+				if ((field instanceof OmniSchema.OmniField) && (!uiOnly || !field.uiExclude)) {
+					uiKeys.push(field.name);
+				}
+			} // for
+
 			Object.defineProperty(this, propName, { configurable: true, 
 												    enumerable: false, 
 													writeable: true, 
@@ -229,10 +371,50 @@ class OmniSchema {
 	* Returns a copy of obj that contains only fields that are present in this
 	* schema.  If uiOnly is TRUE, the returned object will include only
 	* fields that are part of the UI definition (i.e. do NOT have the ui.exclude
-	* property set to TRUE)
+	* property set to TRUE). If obj is not an object, "undefined" is returned.
 	*/
 	sanitize(obj, uiOnly) {
-		return _.pick(obj, this.getFieldList(uiOnly));
+
+		if (typeof(obj) !== 'object') {
+			return undefined;
+		}
+
+		let fieldList = this.getFieldList(uiOnly);
+		let result = {};
+
+		for (let fieldName of fieldList) {
+			let fieldDef = this.getField(fieldName);
+			if ((fieldDef instanceof OmniSchema.OmniField) && (!uiOnly || !fieldDef.uiExclude)) {
+				let fieldVal = obj[fieldName];
+				if (fieldDef.type instanceof OmniSchema) {
+					if (Array.isArray(fieldVal) && fieldDef.isArray) {
+						let array = [];
+						fieldVal.forEach(function (element) {
+							array.push(fieldDef.type.sanitize(element, uiOnly));
+						});
+						result[fieldName] = array;
+					}
+					else {
+						if (fieldDef.isArray && !Array.isArray(fieldVal)) {
+							result[fieldName] = [fieldDef.type.sanitize(fieldVal, uiOnly)];
+						}
+						else {
+							result[fieldName] = fieldDef.type.sanitize(fieldVal, uiOnly);
+						}
+					}
+				}
+				else {
+					if (fieldDef.isArray && !Array.isArray(fieldVal)) {
+						result[fieldName] = [fieldVal];
+					}
+					else {
+						result[fieldName] = fieldVal;
+					}
+				}
+			}
+		} // for
+
+		return result;
 	}
 
 
@@ -253,7 +435,7 @@ class OmniSchema {
 
 		// eslint-disable-next-line
 		for (let fieldName in obj) {
-			let field = this[fieldName];
+			let field = this.getField(fieldName);
 			if (field instanceof OmniSchema.OmniField) {
 				let modelVal = obj[fieldName];
 				if (modelVal === null) {
@@ -261,18 +443,18 @@ class OmniSchema {
 				}
 				else if (!field.isArray) {
 					// Process a single value...
-					model[fieldName] = this.convertValue(modelVal, field);
+					model[fieldName] = this.convertValue(modelVal, field, sanitize);
 				}
 				else {
 					// Process an array of values...
 					if (Array.isArray(modelVal)) {
 						model[fieldName] = [];
 						modelVal.forEach(function (entry) {
-							model[fieldName].push(this.convertValue(entry, field));
+							model[fieldName].push(this.convertValue(entry, field, sanitize));
 						}.bind(this));
 					}
 					else if (!sanitize) {
-						model[fieldName] = [this.convertValue(modelVal, field)]
+						model[fieldName] = [this.convertValue(modelVal, field, sanitize)]
 					}
 				}
 			}
@@ -285,10 +467,13 @@ class OmniSchema {
 	}
 
 
-	convertValue(modelVal, field) {
+	convertValue(modelVal, field, sanitize) {
 
-		if (modelVal !== null) {
-			if (typeof modelVal !== field.type.jsType &&
+		if (modelVal !== null && modelVal !== undefined) {
+			if (field.type instanceof OmniSchema) {
+				return field.type.convert(modelVal, sanitize);
+			}
+			else if (typeof modelVal !== field.type.jsType &&
 				typeof field.type.fromString === 'function') {
 				return field.type.fromString(modelVal.toString());
 			}
