@@ -36,11 +36,11 @@ Usage
 ------------
 
 ```javascript
-const OmniSchema = require('../index');
-const OmniHtml5 = require('../plugins/ui-html5');
-const OmniJoi = require('../plugins/validation-joi');
-const OmniFaker = require('../plugins/mock-faker');
-const OmniCamo = require('../plugins/db-camo');
+const OmniSchema = require('omni-schema');
+const OmniHtml5 = require('omni-schema/plugins/ui-html5');
+const OmniJoi = require('omni-schema/plugins/validation-joi');
+const OmniFaker = require('omni-schema/plugins/mock-faker');
+const OmniCamo = require('omni-schema/plugins/db-camo');
 
 const connect = require('camo').connect;
 
@@ -50,6 +50,10 @@ OmniFaker.plugin();
 OmniCamo.plugin();
 
 const Types = OmniSchema.Types;
+
+
+// A schema is defined by calling OmniSchema.compile(schemaSpecification, collectionName [, parentSchema])
+
 
 // Defining a schema with a collection name of "People"...
 const PersonSchema = OmniSchema.compile({
@@ -232,6 +236,7 @@ using one of the "universal" properties below will make your custom plugin more 
 | Property | Possible values | Notes |
 | -------- | --------------- | ----- |
 | type | A string that matches any data type defined in OmniSchema.Types, or any OmniSchema.Type value | The only required field
+| schema | A string that matches any OmniSchema collection name that has (or will be) compiled, or an actual compiled OmniSchema value (see "Handling circular References to Other Schemas")
 | label | any string | If not specified, a label will be formulated from the field name
 | required | boolean | A shortcut property for `validation.required`
 | db.unique | boolean | If true, this field should be considered 'unique' in any collection of these entries. Primary used in databases.

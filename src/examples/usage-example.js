@@ -13,6 +13,8 @@ OmniCamo.plugin();
 
 const Types = OmniSchema.Types;
 
+// A schema is defined by calling OmniSchema.compile(schemaSpecification, collectionName [, parentSchema])
+
 // Defining a schema with a collection name of "People"...
 const PersonSchema = OmniSchema.compile({
                           firstName: Types.FirstName, // The simplest way to declare a field
