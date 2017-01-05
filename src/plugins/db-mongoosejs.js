@@ -27,6 +27,8 @@ const mongoose = require('mongoose');
 
 // Our namespace for this plugin
 OmniSchema.mongoose = {};
+OmniSchema.mongoose.schemas = {};
+OmniSchema.mongoose.models = {};
 
 // Our "define..Type" method to decorate the data types with attributes that
 // tell us which Mongoose schema types to use for each type...
@@ -54,36 +56,138 @@ let plugin = function() {
 	// Now, mix in functionality to OmniSchema...
 	OmniSchema.mixin({
 
-		onSchema: {
-			func: function getMongooseSchema() {
+		onSchema: [
+			{	func: function getMongooseSchema() {
 
-				let omniSchema = this;
-				let mongooseSchemaDef = {};
-				let fl = this.getFieldList();
-				for (let fieldName of fl) {
-					if (fieldName !== '_id') {
-						let field = omniSchema.getField(fieldName);
-						if (field instanceof OmniSchema.OmniField) {
-							let mongooseField = field.getMongooseField();
-						    mongooseSchemaDef[fieldName] = mongooseField;
+					// If we have already defined this schema, return the singleton...
+					if (this.collectionName && OmniSchema.mongoose.schemas[this.collectionName]) {
+						return OmniSchema.mongoose.schemas[this.collectionName];
+					}
+
+					let omniSchema = this;
+					let mongooseSchemaDef = {};
+					let fl = this.getFieldList();
+					let hasVirtualFields = false;
+					for (let fieldName of fl) {
+						if (fieldName !== '_id') {
+							let field = omniSchema.getField(fieldName);
+							if (field instanceof OmniSchema.OmniField) {
+								let mongooseField = field.getMongooseField();
+								if (mongooseField) {
+							    	mongooseSchemaDef[fieldName] = mongooseField;
+							    }
+							}
+
+							if (field.type instanceof OmniSchema && field.foreignKeyField) {
+								hasVirtualFields = true;
+							}
+
+						}
+					}
+
+
+					let options = {};
+
+					if (omniSchema.hasChildren || omniSchema.isSubClass) {
+						// This schema is part of a hierarchy...
+						options.discriminatorKey = '_type_';
+					}
+
+					if (omniSchema.isSubClass) {
+						options._id = false;
+					}
+
+					if (hasVirtualFields) {
+						options.toJSON = { virtuals: true };
+					}
+
+					let finalSchema = new mongoose.Schema(mongooseSchemaDef, options);
+
+					// If there are schema references with a foreign key, those
+					// need to be optimized as "virtual" fields...
+					if (hasVirtualFields) {
+						for (let fieldName of fl) {
+							let field = omniSchema.getField(fieldName);
+							if (field.type instanceof OmniSchema && field.foreignKeyField) {
+								// Define a "virtual" field for this one...
+								finalSchema.virtual(fieldName, { ref: field.type.collectionName, localField: '_id', foreignField: field.foreignKeyField });
+							}						
+						} // for
+					}
+
+					if (this.collectionName) {
+						OmniSchema.mongoose.schemas[this.collectionName] = finalSchema;
+					}
+
+					return finalSchema;
+				}
+			},
+
+			{	func: function getMongooseModel(className) {
+
+					if (className === undefined) {
+						className = this.collectionName;
+					}
+
+					if (className && OmniSchema.mongoose.models[className]) {
+						return OmniSchema.mongoose.models[className];
+					}
+
+					let model;
+
+					if (this.isSubClass) {
+						let rootModel = this.rootSchema.getMongooseModel();
+						if (!rootModel) {
+							throw new Error(`Can not create Mongoose model for ${className}: the root mongoose schema for ${this.rootSchema.collectionName} has not been defined yet.`);
+						}
+						model = rootModel.discriminator(className, this.getMongooseSchema());
+					}
+					else {
+						model = mongoose.model(className, this.getMongooseSchema());
+					}
+
+					OmniSchema.mongoose.models[className] = model;
+
+					return model;
+
+				}
+
+			},
+		],
+
+		onField: {
+			func: function getMongooseField() {
+
+				if (this.type instanceof OmniSchema) {
+					// We have a reference to another schema...
+					if (this.persistence === 'embed') {
+						// Embedded schemas are defined directly in this schema...
+						let mschema = this.type.getMongooseSchema();
+						if (this.isArray) {
+							return [mschema];
+						}
+						else {
+							return mschema;
+						}
+					}
+					else {
+
+						if (this.foreignKeyField) {
+							// Fields that have foreign keys are optimized as virtual fields.
+							// see getMongooseSchema()
+							return undefined;
+						}
+
+						let ref = { ref: this.type.collectionName, type: mongoose.Schema.Types.ObjectId };
+						if (this.isArray) {
+							return [ref];
+						}
+						else {
+							return ref;
 						}
 					}
 				}
 
-
-				let options = {};
-
-				if (omniSchema.hasChildren || omniSchema.isSubClass) {
-					// This schema is part of a hierarchy...
-					options.discriminatorKey = 'kind';
-				}
-
-				return new mongoose.Schema(mongooseSchemaDef, options);
-			}
-		},
-
-		onField: {
-			func: function getMongooseField() {
 				if (!this.type.getMongooseField) {
 					throw new Error('getMongooseField has not been defined for datatype ' + this.type.name);
 				}

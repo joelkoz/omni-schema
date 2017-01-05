@@ -87,6 +87,12 @@ class OmniField {
 		return _.get(this, 'db.persistence');
 	}
 
+
+	get foreignKeyField() {
+		return _.get(this, 'db.foreignKeyField');
+	}
+
+
 	get defaultValue() {
 		if (this.isArray) {
 			return [];
@@ -106,18 +112,50 @@ class OmniField {
 }
 
 
+let SchemaCache = {};
+
+
+
+class OmniSchemaReference extends OmniField {
+
+	constructor(schema, name, referencedSchemaName, isArray, label) {
+		super(schema, name, null, isArray, label);
+		this._referencedSchemaName = referencedSchemaName;
+	}
+
+	get type() {
+		let schema = SchemaCache[this._referencedSchemaName];
+		if (!schema) {
+			throw new Error(`Unable to locate a compiled schema named ${this._referencedSchemaName}`);
+		}
+		return schema;
+	}
+
+}
+
+
 
 class OmniSchema {
 
 	constructor(collectionName, parentSchema) {
+
 		if (collectionName) {
+
+			if (SchemaCache[collectionName]) {
+				throw new Error(`An OmniSchema collection named ${collectionName} has already been defined. Collection names must be unqiue.`);
+			}
+
 			Object.defineProperty(this, '__collectionName', { enumerable: false, value: collectionName, writeable: true, configurable: true });
+
+			SchemaCache[collectionName] = this;
 		}
+
 
 		if (parentSchema) {
 			Object.defineProperty(this, '__parentSchema', { enumerable: false, value: parentSchema, writeable: true, configurable: true });
 			parentSchema.hasChildren = true;
 		}
+
 	}
 
 
@@ -202,7 +240,7 @@ class OmniSchema {
 				isArray = false;
 			}
 
-			let omniType, required, label, otherProps;
+			let omniType, required, label, otherProps, schemaRef;
 
 			if (prop instanceof OmniTypes.DataType || prop instanceof OmniSchema) {
 				omniType = prop;
@@ -210,10 +248,20 @@ class OmniSchema {
 			}
 			else {
 				let type = prop.type;
+				schemaRef = prop.schema;
 				label = prop.label;
 
 				if (type instanceof OmniTypes.DataType || type instanceof OmniSchema) {
 					omniType = type;
+				}
+				else if (schemaRef) {
+					if (schemaRef instanceof OmniSchema) {
+						omniType = schemaRef;
+						schemaRef = null;
+					}
+					else if (typeof(schemaRef) !== 'string') {
+						throw new Error(`'schema' property on field ${fieldName} must be a string or an OmniSchema instance.`);
+					}
 				}
 				else {
 				    omniType = OmniTypes[type];
@@ -221,11 +269,18 @@ class OmniSchema {
 						throw new Error('Could not locate omniType named ' + type);
 					}
 				}
-				otherProps = _.omit(prop, ['type', 'label']);
+
+				otherProps = _.omit(prop, ['type', 'label', 'schema']);
 			}
 
 			// Create the field definition...
-			let omniField = new OmniField(schema, fieldName, omniType, isArray, label);
+			let omniField;
+			if (schemaRef) {
+				omniField = new OmniSchemaReference(schema, fieldName, schemaRef, isArray, label);
+			}
+			else {
+				omniField = new OmniField(schema, fieldName, omniType, isArray, label);
+			}
 
 			// Merge in any other properties not already compiled...
 			Object.assign(omniField, otherProps);
