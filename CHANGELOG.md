@@ -1,3 +1,10 @@
+## 2.0.0
+###### _Jan 5, 2017_
+
+- Added support for schema inheritance
+- Added support for schema fields (i.e. fields that reference other schemas)
+
+
 ## 1.5.0
 ###### _Nov 5, 2016_
 
