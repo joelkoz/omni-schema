@@ -13,6 +13,7 @@ OmniCamo.plugin();
 
 const Types = OmniSchema.Types;
 
+// Defining a schema with a collection name of "People"...
 const PersonSchema = OmniSchema.compile({
                           firstName: Types.FirstName, // The simplest way to declare a field
                           lastName: { type: 'LastName', required: true }, // If you need to vary from the defaults
@@ -21,14 +22,16 @@ const PersonSchema = OmniSchema.compile({
                       }, 'People');
 
 
+// Defining a schema of a single address.  We will embed this in the ContactSchema below
 const AddressSchema = OmniSchema.compile({
    street: { type: 'StreetAddress' },
    city: { type: 'City' },
    state: { type: 'State' },
    zip: { type: 'PostalCode' }
-}, 'Addresses');
+}, 'Address');
 
 
+// ContactSchema is a collection named "Contacts" that inherits properties from the PersonSchema
 const ContactSchema = OmniSchema.compile({
                       		phone: [{ type: 'Phone' }], // Define an array of something by wrapping it in brackets
                       		email: { type: 'Email', db: { unique: true} },
@@ -37,7 +40,7 @@ const ContactSchema = OmniSchema.compile({
                       		balance: { type: 'Currency', default: 123.45 },
                           age: { type: 'Integer', validation: { min: 13, max: 110 }},
                           ownerId: { type: 'Integer', ui: { exclude: true }}, // Internal field - no user editing
-                  	  }, 'Contacts', PersonSchema);
+                  	  }, 'Contacts', PersonSchema); 
 
 console.log(`The fields in our schema are ${JSON.stringify(ContactSchema.getFieldList())}`);
 
