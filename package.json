@@ -1,6 +1,6 @@
 {
   "name": "omni-schema",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Universal, Extendable Schemas for Javascript",
   "main": "index.js",
   "scripts": {
