@@ -1,3 +1,12 @@
+## 2.0.3
+###### _Jan 12, 2017_
+- Fixed stack overflow on mock data generation involving recursive schemas
+
+## 2.0.2
+###### _Jan 7, 2017_
+- Documentation improvements
+
+
 ## 2.0.0
 ###### _Jan 5, 2017_
 
