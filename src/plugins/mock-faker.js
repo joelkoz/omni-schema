@@ -99,6 +99,13 @@ let plugin = function() {
 			{ 
 			  func: function getMockData(uiExclude) {
 
+			  	if (this.__mockRecursivePrevent) {
+			  		return;
+			  	}
+			  	else {
+			  		this.__mockRecursivePrevent = true;
+			  	}
+
 				let omniSchema = this;
 				let mockData = {};
 				let fl = this.getFieldList();
@@ -119,6 +126,8 @@ let plugin = function() {
 						}
 					}
 				}
+
+			  	this.__mockRecursivePrevent = false;
 				return mockData;
 			  }
 			},
@@ -130,7 +139,7 @@ let plugin = function() {
 					throw new Error('getMockData has not been defined for datatype ' + this.type.name);
 				}
 				if (this.type instanceof OmniSchema) {
-					return this.type.getMockData(uiExclude)
+					return this.type.getMockData(uiExclude);
 				}
 				else {
 					return this.type.getMockData(this);
