@@ -4,6 +4,8 @@ One Schema to Rule them All!
 
 OmniSchema is a universal, extendible schema framework that allows you to practice DRY for data definitions in your Javascript projects. Rather than manage one set of schemas for your database, another for your validations, and yet another set of code for your user interfaces, OmniSchema allows you to define a master schema for any particular entity, then request that it generate automatically a schema for use with your tool of choice.  OmniSchema supports a flexible "plugin" system that allows you decide exactly what you want it to generate for you at runtime. Select from one of the many pre-built plugins, or write your own using OmniSchema's sophisticated yet simple mixin system. 
 
+If you are interested in using a code generator to automatically generate a full stack app including OmniSchema definitions from a UML model, check out the
+[NodeMDA + Feathers + React](https://www.npmjs.com/package/nodemda-feathers-react) project.
 
 Motivation
 -----------
@@ -392,6 +394,13 @@ Uses: *[React](https://facebook.github.io/react)*
       *[Formsy-Material-UI](https://github.com/mbrookes/formsy-material-ui)*
 
 ----
+
+
+Automatically generating schemas
+--------------------------------
+
+If you are interested in using a code generator to automatically generate a full stack app including OmniSchema definitions from a UML model, check out the
+[NodeMDA + Feathers + React](https://www.npmjs.com/package/nodemda-feathers-react) project.
 
 Known Issues
 -------------------------------
